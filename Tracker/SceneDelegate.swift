@@ -29,6 +29,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         
         window = UIWindow(windowScene: windowScene)
         guard let window = window else { return }
+        window.overrideUserInterfaceStyle = .light // Временно, пока не добавим светлую тему
         window.rootViewController = tabBarController
         window.makeKeyAndVisible()
     }

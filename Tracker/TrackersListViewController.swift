@@ -53,7 +53,6 @@ final class TrackersListViewController: UIViewController {
         let picker = UIDatePicker()
         picker.datePickerMode = .date
         picker.preferredDatePickerStyle = .compact
-        
         picker.translatesAutoresizingMaskIntoConstraints = false
         return picker
     }()
