@@ -36,8 +36,13 @@ final class CreateHabitViewController: UIViewController {
     
     private let nameTextField: UITextField = {
         let field = UITextField()
-        field.placeholder = "Введите название трекера"
-        field.font = .systemFont(ofSize: 17)
+        field.attributedPlaceholder = NSAttributedString(
+            string: "Введите название трекера",
+            attributes: [.foregroundColor: UIColor.ypGray]
+            )
+        
+        field.font = .systemFont(ofSize: 17, weight: .regular)
+        field.textColor = .blackDay
         field.borderStyle = .none
         field.backgroundColor = .backgroundDay
         field.layer.cornerRadius = 16

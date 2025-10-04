@@ -31,6 +31,7 @@ final class ScheduleTableViewCell: UITableViewCell {
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
+        backgroundColor = .clear
         setupViews()
         switchView.addAction(UIAction{ [weak self] _ in
             guard let self else { return }

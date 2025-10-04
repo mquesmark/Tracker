@@ -90,7 +90,9 @@ final class HabitScheduleViewController: UIViewController {
         tableView.layer.cornerRadius = 16
         tableView.clipsToBounds = true
         tableView.tableFooterView = UIView()
+        tableView.backgroundColor = .clear
         tableView.translatesAutoresizingMaskIntoConstraints = false
+        tableView.separatorColor = .ypGray
     }
 }
 
