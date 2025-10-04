@@ -17,11 +17,11 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         
         let trackersVC = TrackersListViewController()
         let trackersNavVC = UINavigationController(rootViewController: trackersVC)
-        trackersNavVC.tabBarItem = UITabBarItem(title: "Трекеры", image: UIImage(resource: .trackers), tag: 0)
+        trackersNavVC.tabBarItem = UITabBarItem(title: "Трекеры", image: UIImage(systemName: "record.circle"), tag: 0)
         
         let statisticsVC = StatisticsViewController()
         let statisticsNavVC = UINavigationController(rootViewController: statisticsVC)
-        statisticsVC.tabBarItem = UITabBarItem(title: "Статистика", image: UIImage(resource: .statistics), tag: 1)
+        statisticsVC.tabBarItem = UITabBarItem(title: "Статистика", image: UIImage(systemName: "chart.bar"), tag: 1)
         
         let tabBarController = UITabBarController()
         tabBarController.viewControllers = [trackersNavVC, statisticsNavVC]

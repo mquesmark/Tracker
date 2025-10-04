@@ -1,7 +1,28 @@
 {
   "images" : [
     {
-      "filename" : "IMG_1522 01.13.30.png",
+      "idiom" : "universal",
+      "platform" : "ios",
+      "size" : "1024x1024"
+    },
+    {
+      "appearances" : [
+        {
+          "appearance" : "luminosity",
+          "value" : "dark"
+        }
+      ],
+      "idiom" : "universal",
+      "platform" : "ios",
+      "size" : "1024x1024"
+    },
+    {
+      "appearances" : [
+        {
+          "appearance" : "luminosity",
+          "value" : "tinted"
+        }
+      ],
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
