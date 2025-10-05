@@ -1,6 +1,12 @@
 import UIKit
 
 final class TrackersListViewController: UIViewController {
+    
+    private enum Constants {
+        static let leadingPadding = CGFloat(16)
+        static let rightPadding = CGFloat(16)
+        static let interItemSpacing = CGFloat(10)
+    }
     private let calendar = Calendar(identifier: .iso8601)
     
     private var currentDate: Date = Date()
@@ -82,7 +88,7 @@ final class TrackersListViewController: UIViewController {
         super.viewDidLoad()
         setupUI()
         setupConstraints()
-      //  categories = categoriesMock
+        categories = categoriesMock
         setupCollection()
         setupHideKeyboard()
     }
@@ -316,7 +322,7 @@ extension TrackersListViewController: UICollectionViewDelegate {
 // MARK: - UICollectionViewDelegateFlowLayout Private Methods
 extension TrackersListViewController: UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        CGSize(width: (collectionView.bounds.width - 32 - 10) / 2, height: 148)
+        CGSize(width: (collectionView.bounds.width - Constants.leadingPadding - Constants.rightPadding - Constants.interItemSpacing) / 2, height: 148)
     }
     
     func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
