@@ -3,7 +3,12 @@ import UIKit
 protocol CreateHabitViewControllerDelegate: AnyObject {
     func createTracker(name: String, categoryName: String, schedule: [WeekDay])
 }
+
 final class CreateHabitViewController: UIViewController {
+    
+    private enum Constants {
+        static let symbolsLimit = 38
+    }
     
     var delegate: CreateHabitViewControllerDelegate?
     private var chosenDays: [WeekDay] = []
@@ -338,7 +343,7 @@ final class CreateHabitViewController: UIViewController {
 
     func checkTrackerConditionsToBeTrue() {
         let symbolsCount = nameTextField.text?.count ?? 0
-        let nameIsValid = (1...38).contains(symbolsCount)
+        let nameIsValid = (1...Constants.symbolsLimit).contains(symbolsCount)
 
         let canCreate = nameIsValid && !chosenDays.isEmpty
         changeCreateButtonAvailability(to: canCreate)
@@ -346,21 +351,12 @@ final class CreateHabitViewController: UIViewController {
     
     func checkSymbolsLimit() {
         let symbolsCount = nameTextField.text?.count ?? 0
-        if symbolsCount > 38 {
-            showSymbolsLimitLabel()
-        } else {
-            hideSymbolsLimitLabel()
-        }
+        symbolsCount > Constants.symbolsLimit ? showSymbolsLimitLabel() : hideSymbolsLimitLabel()
     }
     
     private func changeCreateButtonAvailability(to available: Bool) {
-        if available {
-            createButton.isUserInteractionEnabled = true
-            createButton.backgroundColor = .blackDay
-        } else {
-            createButton.isUserInteractionEnabled = false
-            createButton.backgroundColor = .ypGray
-        }
+        createButton.isUserInteractionEnabled = available
+        createButton.backgroundColor = available ? .blackDay : .ypGray
     }
     
     private func showSymbolsLimitLabel() {

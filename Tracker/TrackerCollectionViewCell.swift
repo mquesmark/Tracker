@@ -3,7 +3,7 @@ import UIKit
 final class TrackerCollectionViewCell: UICollectionViewCell {
     static let reuseIdentifier = "TrackerCollectionViewCell"
     
-    let cardView: UIView = {
+    private let cardView: UIView = {
         let view = UIView()
         view.layer.cornerRadius = 16
         view.clipsToBounds = true
@@ -14,7 +14,7 @@ final class TrackerCollectionViewCell: UICollectionViewCell {
         return view
     }()
     
-    let emojiLabel: UILabel = {
+    private let emojiLabel: UILabel = {
         let label = UILabel()
         label.font = .systemFont(ofSize: 16, weight: .medium)
         label.textAlignment = .center
@@ -22,7 +22,7 @@ final class TrackerCollectionViewCell: UICollectionViewCell {
         return label
     }()
     
-    let emojiPlatform: UIView = {
+    private let emojiPlatform: UIView = {
         let platform = UIView()
         platform.backgroundColor = UIColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 0.3)
         platform.layer.cornerRadius = 15
@@ -31,7 +31,7 @@ final class TrackerCollectionViewCell: UICollectionViewCell {
         return platform
     }()
     
-    let nameLabel: UILabel = {
+    private let nameLabel: UILabel = {
         let label = UILabel()
         label.font = .systemFont(ofSize: 12, weight: .medium)
         label.numberOfLines = 2
@@ -42,7 +42,7 @@ final class TrackerCollectionViewCell: UICollectionViewCell {
         return label
     }()
     
-    let streakLabel: UILabel = {
+    private let streakLabel: UILabel = {
         let label = UILabel()
         label.font = .systemFont(ofSize: 12, weight: .medium)
         label.textAlignment = .left
@@ -53,7 +53,7 @@ final class TrackerCollectionViewCell: UICollectionViewCell {
         return label
     }()
     
-    let plusButton: UIButton = {
+    private let plusButton: UIButton = {
         let button = UIButton(type: .system)
         button.setImage(UIImage(systemName: "plus"), for: .normal)
         button.tintColor = .whiteDay
@@ -70,9 +70,7 @@ final class TrackerCollectionViewCell: UICollectionViewCell {
         setupViews()
     }
     
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
+    required init?(coder: NSCoder) { nil }
     
     func configure(withTracker tracker: Tracker, isCompleted: Bool, daysCompleted: Int) {
         emojiLabel.text = tracker.emoji
@@ -87,7 +85,7 @@ final class TrackerCollectionViewCell: UICollectionViewCell {
         configPlusButton(isCompleted: isCompleted)
     }
     
-    func configPlusButton(isCompleted: Bool) {
+    private func configPlusButton(isCompleted: Bool) {
         
         if isCompleted {
             let plusIconConfig = UIImage.SymbolConfiguration(pointSize: 14, weight: .bold, scale: .medium)

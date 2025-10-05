@@ -1,5 +1,3 @@
-import UIKit
-
 enum WeekDay: Int, CaseIterable {
     case monday = 1
     case tuesday
@@ -31,22 +29,4 @@ enum WeekDay: Int, CaseIterable {
         case .sunday: return "Вс"
         }
     }
-}
-
-struct Tracker {
-    let id: UUID
-    let name: String
-    let emoji: String
-    let color: UIColor
-    let schedule: [WeekDay]
-}
-
-struct TrackerCategory {
-    let name: String
-    let trackers: [Tracker]
-}
-
-struct TrackerRecord {
-    let trackerId: UUID
-    let dateLogged: Date
 }

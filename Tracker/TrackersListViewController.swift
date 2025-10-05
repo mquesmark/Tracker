@@ -11,35 +11,9 @@ final class TrackersListViewController: UIViewController {
     
     private var completedTrackers: [TrackerRecord] = []
     
-    private let categoriesMock: [TrackerCategory] = [
-        TrackerCategory(name: "Домашний уют", trackers: [
-            Tracker(id: UUID(), name: "Протереть пыль", emoji: "💨", color: .colorSelection14, schedule: [.monday, .wednesday, .friday, .saturday]),
-            Tracker(id: UUID(), name: "Купить чай", emoji: "🍃", color: .colorSelection9, schedule: [.tuesday, .thursday, .saturday])
-        ]),
-        TrackerCategory(name: "Здоровье", trackers: [
-            Tracker(id: UUID(), name: "Утренняя зарядка", emoji: "🏃‍♂️", color: .colorSelection2, schedule: [.monday, .thursday, .saturday]),
-            Tracker(id: UUID(), name: "Медитация", emoji: "🧘‍♀️", color: .colorSelection3, schedule: [.wednesday, .friday, .saturday])
-        ]),
-        TrackerCategory(name: "Развитие", trackers: [
-            Tracker(id: UUID(), name: "Чтение книги", emoji: "📚", color: .colorSelection5, schedule: [.monday, .thursday]),
-            Tracker(id: UUID(), name: "Изучение языка", emoji: "🗣", color: .colorSelection6, schedule: [.wednesday, .friday])
-        ]),
-        TrackerCategory(name: "Работа", trackers: [
-            Tracker(id: UUID(), name: "Работа над проектом", emoji: "💻", color: .colorSelection10, schedule: [.monday, .wednesday, .thursday, .friday]),
-            Tracker(id: UUID(), name: "Планирование дня", emoji: "📝", color: .colorSelection8, schedule: [.monday, .thursday])
-        ]),
-        TrackerCategory(name: "Отдых", trackers: [
-            Tracker(id: UUID(), name: "Прогулка", emoji: "🚶‍♂️", color: .colorSelection1, schedule: [.thursday, .saturday]),
-            Tracker(id: UUID(), name: "Вечерний отдых", emoji: "🛀", color: .colorSelection4, schedule: [.friday, .saturday])
-        ]),
-        TrackerCategory(name: "Социальное", trackers: [
-            Tracker(id: UUID(), name: "Звонок другу", emoji: "📞", color: .colorSelection11, schedule: [.monday, .wednesday, .friday]),
-            Tracker(id: UUID(), name: "Поход с друзьями", emoji: "🍻", color: .colorSelection12, schedule: [.saturday])
-        ])
-    ]
+    private let categoriesMock = MockData.categoriesMock
     
-    
-    let collectionView: UICollectionView = {
+    private let collectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         
         let collection = UICollectionView(frame: .zero, collectionViewLayout: layout)
@@ -301,9 +275,7 @@ extension TrackersListViewController: UICollectionViewDataSource {
         return categories.count
     }
     
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return filteredTrackers(for: categories[section]).count
-    }
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int { filteredTrackers(for: categories[section]).count }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "TrackerCollectionViewCell", for: indexPath) as? TrackerCollectionViewCell ?? TrackerCollectionViewCell()
@@ -344,8 +316,7 @@ extension TrackersListViewController: UICollectionViewDelegate {
 // MARK: - UICollectionViewDelegateFlowLayout Private Methods
 extension TrackersListViewController: UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        return CGSize(width: (collectionView.bounds.width - 32 - 10) / 2,
-                      height: 148)
+        CGSize(width: (collectionView.bounds.width - 32 - 10) / 2, height: 148)
     }
     
     func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
@@ -361,12 +332,10 @@ extension TrackersListViewController: UICollectionViewDelegateFlowLayout {
         return trackers.isEmpty ? .zero : CGSize(width: collectionView.bounds.width, height: 46)
     }
     
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
-        return 9
-    }
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat { 9 }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
-        return UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
+        UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
     }
 }
 

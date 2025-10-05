@@ -9,7 +9,7 @@ final class ScheduleTableViewCell: UITableViewCell {
 
     weak var delegate: ScheduleCellDelegate?
     
-    let dayOfWeekLabel: UILabel = {
+    private let dayOfWeekLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 17, weight: .regular)
         label.textColor = .blackDay
@@ -17,7 +17,7 @@ final class ScheduleTableViewCell: UITableViewCell {
         return label
     }()
     
-    let switchView: UISwitch = {
+    private let switchView: UISwitch = {
         let switchView = UISwitch()
         switchView.onTintColor = UIColor(
             red: 55.0/255.0,
@@ -39,9 +39,7 @@ final class ScheduleTableViewCell: UITableViewCell {
         }, for: .valueChanged)
     }
 
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
+    required init?(coder: NSCoder) { nil }
     
     func setWeekDay(to weekDay: WeekDay) {
         dayOfWeekLabel.text = weekDay.title

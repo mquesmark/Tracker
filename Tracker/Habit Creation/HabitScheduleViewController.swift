@@ -7,11 +7,11 @@ final class HabitScheduleViewController: UIViewController {
 
     weak var delegate: HabitScheduleViewControllerDelegate?
     
-    let days = WeekDay.allCases
-    var preselectedDays: Set<WeekDay>? = nil
-    var chosenDays: Set<WeekDay> = []
+    private let days = WeekDay.allCases
+    var preselectedDays: Set<WeekDay>?
+    private var chosenDays: Set<WeekDay> = []
     
-    let topLabel: UILabel = {
+    private let topLabel: UILabel = {
         let label = UILabel()
         label.text = "Расписание"
         label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
@@ -21,9 +21,9 @@ final class HabitScheduleViewController: UIViewController {
         return label
     }()
     
-    let tableView = UITableView()
+    private let tableView = UITableView()
     
-    let doneButton: UIButton = {
+    private let doneButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("Готово", for: .normal)
         button.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
@@ -101,9 +101,7 @@ extension HabitScheduleViewController: UITableViewDelegate {
 }
 
 extension HabitScheduleViewController: UITableViewDataSource {
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 7
-    }
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { 7 }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: ScheduleTableViewCell.reuseIdentifier, for: indexPath) as? ScheduleTableViewCell ?? ScheduleTableViewCell()
