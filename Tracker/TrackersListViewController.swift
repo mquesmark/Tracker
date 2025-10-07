@@ -88,7 +88,7 @@ final class TrackersListViewController: UIViewController {
         super.viewDidLoad()
         setupUI()
         setupConstraints()
-        categories = categoriesMock
+       // categories = categoriesMock
         setupCollection()
         setupHideKeyboard()
     }
@@ -347,8 +347,9 @@ extension TrackersListViewController: UICollectionViewDelegateFlowLayout {
 
 
 extension TrackersListViewController: CreateHabitViewControllerDelegate {
-    func createTracker(name: String, categoryName: String, schedule: [WeekDay]) {
-        let tracker = Tracker(id: UUID(), name: name, emoji: "✍🏻", color: .colorSelection9, schedule: schedule)
+
+    func createTracker(name: String, categoryName: String, schedule: [WeekDay], color: UIColor, emoji: String) {
+        let tracker = Tracker(id: UUID(), name: name, emoji: emoji, color: color, schedule: schedule)
         
         if let sectionIndex = categories.firstIndex(where: { $0.name == categoryName }) {
             var category = categories[sectionIndex]

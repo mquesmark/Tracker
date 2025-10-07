@@ -3,6 +3,8 @@ import UIKit
 final class TrackerCollectionViewCell: UICollectionViewCell {
     static let reuseIdentifier = "TrackerCollectionViewCell"
     
+    var onPlusTap: (() -> Void)?
+
     private let cardView: UIView = {
         let view = UIView()
         view.layer.cornerRadius = 16
@@ -62,9 +64,7 @@ final class TrackerCollectionViewCell: UICollectionViewCell {
         button.translatesAutoresizingMaskIntoConstraints = false
     return button
     }()
-    
-    var onPlusTap: (() -> Void)?
-    
+        
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupViews()
