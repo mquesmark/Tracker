@@ -128,7 +128,7 @@ func addTracker(_ tracker: Tracker, toCategoryWithName categoryName: String)
     trackerCD.emoji = tracker.emoji
     trackerCD.id = tracker.id
     trackerCD.color = tracker.color
-    trackerCD.schedule = tracker.schedule as NSObject
+    trackerCD.schedule = tracker.schedule as NSArray
     trackerCD.category = category
     
     try? context.save()
@@ -350,10 +350,14 @@ extension TrackerStore {
         context.refreshAllObjects()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
             guard let self else { return }
-            try? self.fetchedResultsController?.performFetch()
-            self.delegate?.storeDidReloadData(self)
-            print("🔁 Refetched after toggleRecord (UI sync)")
+            do {
+                try self.fetchedResultsController?.performFetch()
+                self.delegate?.storeDidReloadData(self)
+                print("🔁 Soft refetch after toggleRecord (UI sync)")
+            } catch {
+                print("❌ Fetch error after toggle:", error)
+            }
         }
-        print("🔁 Context refreshed and UI reloaded after record toggle")
+        
     }
 }
