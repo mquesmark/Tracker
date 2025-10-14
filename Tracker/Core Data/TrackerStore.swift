@@ -26,6 +26,7 @@ final class TrackerStore: NSObject {
 private var allTrackers: [Tracker] = []
 private var filteredTrackers: [Tracker] = []
 private var togglingTrackerIDs = Set<UUID>()
+private var isToggling = false
 var numberOfSections: Int {
     fetchedResultsController?.sections?.count ?? 0
 }
@@ -208,6 +209,7 @@ func controller(
     for type: NSFetchedResultsChangeType,
     newIndexPath: IndexPath?
 ) {
+    guard !isToggling else { return }
     switch type {
     case .insert:
         guard let new = newIndexPath else { return }
@@ -293,9 +295,13 @@ extension TrackerStore {
     
     func toggleRecord(for tracker: Tracker, for date: Date) {
         // Reentrancy guard: prevent double toggle while UI/FRC cycles
-        if togglingTrackerIDs.contains(tracker.id) { return }
+        if togglingTrackerIDs.contains(tracker.id) || isToggling { return }
+        isToggling = true
         togglingTrackerIDs.insert(tracker.id)
-        defer { togglingTrackerIDs.remove(tracker.id) }
+        defer {
+            togglingTrackerIDs.remove(tracker.id)
+            isToggling = false
+        }
 
         let rs = TrackerRecordStore.shared
         let record = TrackerRecord(trackerId: tracker.id, dateLogged: date)

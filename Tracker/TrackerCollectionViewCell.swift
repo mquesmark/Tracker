@@ -4,6 +4,7 @@ final class TrackerCollectionViewCell: UICollectionViewCell {
     static let reuseIdentifier = "TrackerCollectionViewCell"
     
     var onPlusTap: (() -> Void)?
+    private var plusAction: UIAction?
 
     private let cardView: UIView = {
         let view = UIView()
@@ -79,9 +80,15 @@ final class TrackerCollectionViewCell: UICollectionViewCell {
         cardView.backgroundColor = tracker.color
         plusButton.backgroundColor = tracker.color
 
-        plusButton.addAction(UIAction { [weak self] _ in
+        if let oldAction = plusAction {
+            plusButton.removeAction(oldAction, for: .touchUpInside)
+        }
+        let action = UIAction { [weak self] _ in
             self?.onPlusTap?()
-        }, for: .touchUpInside)
+        }
+        plusButton.addAction(action, for: .touchUpInside)
+        plusAction = action
+
         configPlusButton(isCompleted: isCompleted)
     }
     
@@ -154,5 +161,13 @@ final class TrackerCollectionViewCell: UICollectionViewCell {
             plusButton.widthAnchor.constraint(equalToConstant: 34),
             plusButton.heightAnchor.constraint(equalToConstant: 34)
         ])
+    }
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        if let oldAction = plusAction {
+            plusButton.removeAction(oldAction, for: .touchUpInside)
+        }
+        plusAction = nil
+        onPlusTap = nil
     }
 }
