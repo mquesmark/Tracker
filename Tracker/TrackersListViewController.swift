@@ -91,13 +91,6 @@ final class TrackersListViewController: UIViewController {
         trackerStore.updateDate(datePicker.date)
     }
     
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        
-        starStackVisibilityCheck()
-
-    }
-    
     // MARK: - UI Setup
     private func setupUI() {
         if let tabBar = self.tabBarController?.tabBar {
@@ -270,6 +263,10 @@ extension TrackersListViewController: UICollectionViewDataSource {
         
         cell.onPlusTap = { [weak self] in
             guard let self else { return }
+            guard self.datePicker.date <= Date() else {
+                AlertService.shared.showAlert(title: "Ошибка", message: "Нельзя выполнить трекер за день, который еще не наступил", viewController: self, actions: [UIAlertAction(title: "Жаль", style: .default)])
+                return
+            }
             self.trackerStore.toggleRecord(for: tracker, for: self.datePicker.date)
         }
         return cell
