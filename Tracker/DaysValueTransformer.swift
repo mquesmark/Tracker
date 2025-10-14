@@ -5,7 +5,7 @@ final class DaysValueTransformer: ValueTransformer {
     
     static let name = NSValueTransformerName(rawValue: "DaysValueTransformer")
     
-    override class func transformedValueClass() -> AnyClass { NSData.self }
+    override class func transformedValueClass() -> AnyClass { NSArray.self }
     override class func allowsReverseTransformation() -> Bool { true }
     
     override func transformedValue(_ value: Any?) -> Any? {

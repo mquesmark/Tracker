@@ -25,9 +25,8 @@ final class TrackerStore: NSObject {
     
 private var allTrackers: [Tracker] = []
 private var filteredTrackers: [Tracker] = []
-private var togglingTrackerIDs = Set<UUID>()
-private var isToggling = false
-var numberOfSections: Int {
+
+    var numberOfSections: Int {
     fetchedResultsController?.sections?.count ?? 0
 }
 
@@ -40,16 +39,9 @@ func tracker(at indexPath: IndexPath) -> TrackerCoreData {
 }
 
 func convertToTracker(_ trackerCD: TrackerCoreData) -> Tracker? {
-    guard let id = trackerCD.id else {
-        print("❌ Ошибка: id == nil для объекта \(trackerCD)")
-        return nil
-    }
-    guard let name = trackerCD.name else {
-        print("❌ Ошибка: name == nil для трекера с id \(id)")
-        return nil
-    }
-    guard let emoji = trackerCD.emoji else {
-        print("❌ Ошибка: emoji == nil для трекера \(name)")
+    guard let id = trackerCD.id,
+          let name = trackerCD.name,
+          let emoji = trackerCD.emoji else {
         return nil
     }
 
@@ -103,10 +95,6 @@ private override init() {
 
     setupFetchedResultsController(for: Date())
     try? fetchedResultsController?.performFetch()
-    if let objects = fetchedResultsController?.fetchedObjects {
-        allTrackers = objects.compactMap { convertToTracker($0) }
-        filteredTrackers = allTrackers
-    }
 }
 
 func addTracker(_ tracker: Tracker, toCategoryWithName categoryName: String)
@@ -133,6 +121,14 @@ func addTracker(_ tracker: Tracker, toCategoryWithName categoryName: String)
     
     try? context.save()
     print("💾 Tracker added: \(tracker.name)")
+    
+    do {
+        try self.fetchedResultsController?.performFetch()
+        self.delegate?.storeDidReloadData(self)
+        print("🔁 Soft refetch after toggleRecord (UI sync)")
+    } catch {
+        print("❌ Fetch error after toggle:", error)
+    }
 }
 
 private func setupFetchedResultsController(for date: Date) {
@@ -143,7 +139,6 @@ private func setupFetchedResultsController(for date: Date) {
     let weekdayNumber = calendar.component(.weekday, from: date)
     let adjusted = weekdayNumber == 1 ? 7 : weekdayNumber - 1
     let weekday = WeekDay(rawValue: adjusted)
-    
     if let weekday {
         request.predicate = NSPredicate(format: "schedule CONTAINS %@", NSNumber(value: weekday.rawValue))
     }
@@ -297,45 +292,8 @@ func controllerDidChangeContent(
 }
 
 extension TrackerStore {
-    func clearAllData() {
-        let entityNames = [
-            "TrackerRecordCoreData",
-            "TrackerCoreData",
-            "TrackerCategoryCoreData"
-        ]
-
-        for name in entityNames {
-            let fetch = NSFetchRequest<NSFetchRequestResult>(entityName: name)
-            let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetch)
-            // Важно: вернуть IDs удалённых объектов, чтобы сообщить об изменениях FRC
-            deleteRequest.resultType = .resultTypeObjectIDs
-            do {
-                let result = try context.execute(deleteRequest) as? NSBatchDeleteResult
-                if let objectIDs = result?.result as? [NSManagedObjectID], !objectIDs.isEmpty {
-                    let changes: [AnyHashable: Any] = [NSDeletedObjectsKey: objectIDs]
-                    NSManagedObjectContext.mergeChanges(fromRemoteContextSave: changes, into: [context])
-                }
-            } catch {
-                print("❌ Ошибка очистки сущности \(name):", error)
-            }
-        }
-
-        do { try context.save() } catch { print("❌ Ошибка сохранения после очистки:", error) }
-    }
-}
-
-extension TrackerStore {
     
     func toggleRecord(for tracker: Tracker, for date: Date) {
-        // Reentrancy guard: prevent double toggle while UI/FRC cycles
-        if togglingTrackerIDs.contains(tracker.id) || isToggling { return }
-        isToggling = true
-        togglingTrackerIDs.insert(tracker.id)
-        defer {
-            togglingTrackerIDs.remove(tracker.id)
-            isToggling = false
-        }
-
         print("🔄 toggleRecord: \(tracker.name) \(date)")
 
         let rs = TrackerRecordStore.shared
