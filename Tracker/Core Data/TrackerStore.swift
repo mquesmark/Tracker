@@ -132,8 +132,7 @@ func addTracker(_ tracker: Tracker, toCategoryWithName categoryName: String)
     trackerCD.category = category
     
     try? context.save()
-    try? fetchedResultsController?.performFetch()
-    delegate?.storeDidReloadData(self)
+    print("💾 Tracker added: \(tracker.name)")
 }
 
 private func setupFetchedResultsController(for date: Date) {
@@ -200,6 +199,15 @@ func controllerWillChangeContent(
     movedIndexPaths = []
     insertedSections = []
     deletedSections = []
+    print("🔄 FRC will change content")
+    print("Sections count: \(controller.sections?.count ?? 0)")
+    var totalObjects = 0
+    if let sections = controller.sections {
+        for section in sections {
+            totalObjects += section.numberOfObjects
+        }
+    }
+    print("Total objects before changes: \(totalObjects)")
 }
 
 func controller(
@@ -209,7 +217,6 @@ func controller(
     for type: NSFetchedResultsChangeType,
     newIndexPath: IndexPath?
 ) {
-    guard !isToggling else { return }
     switch type {
     case .insert:
         guard let new = newIndexPath else { return }
@@ -227,6 +234,14 @@ func controller(
         break
     }
     print("🔹 Change type:", type, "at", indexPath ?? "-", "new:", newIndexPath ?? "-")
+    print("Sections count: \(controller.sections?.count ?? 0)")
+    var totalObjects = 0
+    if let sections = controller.sections {
+        for section in sections {
+            totalObjects += section.numberOfObjects
+        }
+    }
+    print("Total objects after change: \(totalObjects)")
 }
 
 func controller(_ controller: NSFetchedResultsController<any NSFetchRequestResult>, didChange sectionInfo: any NSFetchedResultsSectionInfo, atSectionIndex sectionIndex: Int, for type: NSFetchedResultsChangeType) {
@@ -238,10 +253,28 @@ func controller(_ controller: NSFetchedResultsController<any NSFetchRequestResul
     default:
         break
     }
+    print("🔸 Section change type:", type, "at section:", sectionIndex)
+    print("Sections count: \(controller.sections?.count ?? 0)")
+    var totalObjects = 0
+    if let sections = controller.sections {
+        for section in sections {
+            totalObjects += section.numberOfObjects
+        }
+    }
+    print("Total objects after section change: \(totalObjects)")
 }
 func controllerDidChangeContent(
     _ controller: NSFetchedResultsController<any NSFetchRequestResult>
 ) {
+    print("🔄 FRC did change content")
+    print("Sections count: \(controller.sections?.count ?? 0)")
+    var totalObjects = 0
+    if let sections = controller.sections {
+        for section in sections {
+            totalObjects += section.numberOfObjects
+        }
+    }
+    print("Total objects after changes: \(totalObjects)")
     delegate?.store(
         self,
         didUpdate: TrackerStoreUpdate(
@@ -303,12 +336,24 @@ extension TrackerStore {
             isToggling = false
         }
 
+        print("🔄 toggleRecord: \(tracker.name) \(date)")
+
         let rs = TrackerRecordStore.shared
         let record = TrackerRecord(trackerId: tracker.id, dateLogged: date)
         if rs.isCompleted(trackerId: tracker.id, date: date) {
             rs.removeRecord(record)
+            print("🔄 toggleRecord completed for \(tracker.name)")
         } else {
             rs.addRecord(record)
+            print("🔄 toggleRecord completed for \(tracker.name)")
         }
+        context.refreshAllObjects()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+            guard let self else { return }
+            try? self.fetchedResultsController?.performFetch()
+            self.delegate?.storeDidReloadData(self)
+            print("🔁 Refetched after toggleRecord (UI sync)")
+        }
+        print("🔁 Context refreshed and UI reloaded after record toggle")
     }
 }

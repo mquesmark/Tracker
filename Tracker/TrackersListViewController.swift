@@ -346,7 +346,10 @@ extension TrackersListViewController: TrackerStoreDelegate {
     }
 
     func storeDidReloadData(_ store: TrackerStore) {
-        collectionView.reloadData()
-        starStackVisibilityCheck()
+        UIView.performWithoutAnimation {
+            self.collectionView.reloadData()
+            self.collectionView.layoutIfNeeded()
+        }
+        self.starStackVisibilityCheck()
     }
 }
