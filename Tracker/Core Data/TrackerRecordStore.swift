@@ -9,8 +9,7 @@ final class TrackerRecordStore {
     private let calendar = Calendar(identifier: .iso8601)
     
     private init() {
-        let appDelegate = UIApplication.shared.delegate as! AppDelegate
-        context = appDelegate.persistentContainer.viewContext
+        context = DataBaseStore.shared.context
     }
     
     // MARK: - Public Methods
@@ -27,8 +26,7 @@ final class TrackerRecordStore {
                 return
             }
             
-            // Avoid duplicates for this day
-            if isCompleted(trackerId: record.trackerId, date: record.dateLogged) {
+            guard !isCompleted(trackerId: record.trackerId, date: record.dateLogged) else {
                 return
             }
             
@@ -106,7 +104,10 @@ final class TrackerRecordStore {
     
     private func dayBounds(for date: Date) -> (Date, Date) {
         let start = calendar.startOfDay(for: date)
-        let end = calendar.date(byAdding: .day, value: 1, to: start)!
+        guard let end = calendar.date(byAdding: .day, value: 1, to: start) else {
+            assertionFailure("❌ Unable to calculate end of day for \(date)")
+            return (date, date)
+        }
         return (start, end)
     }
 }

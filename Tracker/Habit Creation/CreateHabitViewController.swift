@@ -83,7 +83,7 @@ final class CreateHabitViewController: UIViewController {
         return view
     }()
     
-    private let emojis: [String] = ["🙂", "😻", "🌺", "🐶", "❤️", "😱", "😇", "😡", "🥶", "🤔", "🙌", "🍔", "🥦", "🏓", "🥇", "🎸", "🏝️", "😪"]
+    private let emojis: [String] = MockData.emojis
     private var chosenEmoji: String?
 
     private let emojiCollectionView: UICollectionView = {
@@ -468,12 +468,9 @@ extension CreateHabitViewController: HabitScheduleViewControllerDelegate {
 
 extension CreateHabitViewController: UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        if collectionView == emojiCollectionView {
-            return emojis.count
-        } else if collectionView == colorCollectionView {
-            return colors.count
-        }
-        return 1
+        collectionView == emojiCollectionView ? emojis.count
+           : collectionView == colorCollectionView ? colors.count
+           : 1
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {

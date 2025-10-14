@@ -1,7 +1,7 @@
 import UIKit
 
 final class TrackersListViewController: UIViewController {
-    
+        
     private enum Constants {
         static let leadingPadding = CGFloat(16)
         static let rightPadding = CGFloat(16)
@@ -9,7 +9,8 @@ final class TrackersListViewController: UIViewController {
     }
     private let calendar = Calendar(identifier: .iso8601)
     
-    private var trackerStore: TrackerStore!
+    private lazy var trackerStore: TrackerStore = .shared
+    
     private var recordStore: TrackerRecordStore = .shared
     
     private var currentDate: Date = Date()

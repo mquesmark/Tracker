@@ -4,8 +4,8 @@ final class TrackerCategoryStore {
     
     private let context: NSManagedObjectContext
     
-    init(context: NSManagedObjectContext) {
-        self.context = context
+    init() {
+        context = DataBaseStore.shared.context
     }
     
     func addCategory(_ category: TrackerCategory) {
