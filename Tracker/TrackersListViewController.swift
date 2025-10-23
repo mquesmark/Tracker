@@ -90,6 +90,7 @@ final class TrackersListViewController: UIViewController {
         trackerStore = TrackerStore.shared
         trackerStore.delegate = self
         trackerStore.updateDate(datePicker.date)
+        onboardingCheck()
     }
     
     // MARK: - UI Setup
@@ -212,6 +213,17 @@ final class TrackersListViewController: UIViewController {
         }
     }
     
+    private func onboardingCheck() {
+        let isSeen: Bool = UserDefaults.standard.bool(forKey: "onboardingSeen")
+        
+        if isSeen {
+            return
+        } else {
+            let onboardingPageVC = OnboardingPageViewController()
+            onboardingPageVC.modalPresentationStyle = .fullScreen
+            present(onboardingPageVC, animated: false)
+        }
+    }
     
     // MARK: - User Actions Handlers
     
