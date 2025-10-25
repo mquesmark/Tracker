@@ -176,25 +176,15 @@ final class NewCategoryViewController: UIViewController {
             self.hideWarningAnimationStarted = false
         }
     }
-    
-    
+
+
     private func setupHideKeyboardGesture() {
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(hideKeyboard))
         tapGesture.cancelsTouchesInView = false
         view.addGestureRecognizer(tapGesture)
     }
-    
+
     @objc private func hideKeyboard() {
         view.endEditing(true)
     }
 }
-
-    private func setupHideKeyboardGesture() {
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(hideKeyboard))
-        tapGesture.cancelsTouchesInView = false
-        view.addGestureRecognizer(tapGesture)
-    }
-
-    @objc private func hideKeyboard() {
-        view.endEditing(true)
-    }
