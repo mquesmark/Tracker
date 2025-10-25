@@ -63,6 +63,7 @@ final class NewCategoryViewController: UIViewController {
         setupUI()
         addActions()
         setupModel()
+        setupHideKeyboardGesture()
     }
     
     // MARK: - User Actions Handlers
@@ -176,3 +177,13 @@ final class NewCategoryViewController: UIViewController {
         }
     }
 }
+
+    private func setupHideKeyboardGesture() {
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(hideKeyboard))
+        tapGesture.cancelsTouchesInView = false
+        view.addGestureRecognizer(tapGesture)
+    }
+
+    @objc private func hideKeyboard() {
+        view.endEditing(true)
+    }
