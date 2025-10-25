@@ -15,7 +15,8 @@ final class CreateHabitViewController: UIViewController {
     private var category: TrackerCategory?
     
     private var scheduleSubtitleLabel: UILabel?
-
+    private var categorySubtitleLabel: UILabel?
+    
     private var showWarningAnimationStarted = false
     private var hideWarningAnimationStarted = false
     
@@ -44,7 +45,7 @@ final class CreateHabitViewController: UIViewController {
         field.attributedPlaceholder = NSAttributedString(
             string: "Введите название трекера",
             attributes: [.foregroundColor: UIColor.ypGray]
-            )
+        )
         
         field.font = .systemFont(ofSize: 17, weight: .regular)
         field.textColor = .blackDay
@@ -85,7 +86,7 @@ final class CreateHabitViewController: UIViewController {
     
     private let emojis: [String] = MockData.emojis
     private var chosenEmoji: String?
-
+    
     private let emojiCollectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .vertical
@@ -97,7 +98,7 @@ final class CreateHabitViewController: UIViewController {
         collection.backgroundColor = .clear
         return collection
     }()
-
+    
     private let colorCollectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .vertical
@@ -182,7 +183,18 @@ final class CreateHabitViewController: UIViewController {
     
     // MARK: - User Actions Handlers
     private func categoryButtonTapped() {
-        
+        let vc = HabitCategoriesViewController()
+        vc.modalPresentationStyle = .pageSheet
+        vc.onCategoryPicked = { [weak self] category in
+            self?.userPickedCategory(category)
+        }
+        present(vc, animated: true)
+    }
+    
+    private func userPickedCategory(_ category: TrackerCategory) {
+        self.category = category
+        updateCategorySubtitle(with: category)
+        checkTrackerConditionsToBeTrue()
     }
     
     private func scheduleButtonTapped() {
@@ -195,8 +207,8 @@ final class CreateHabitViewController: UIViewController {
     
     private func createButtonTapped() {
         createButton.isUserInteractionEnabled = false
-        guard let chosenEmoji, let chosenColor, let name = nameTextField.text else { return }
-        delegate?.createTracker(name: name, categoryName: "Категория по умолчанию", schedule: chosenDays, color: chosenColor, emoji: chosenEmoji)
+        guard let chosenEmoji, let chosenColor, let name = nameTextField.text, let categoryName = category?.name else { return }
+        delegate?.createTracker(name: name, categoryName: categoryName, schedule: chosenDays, color: chosenColor, emoji: chosenEmoji)
         dismiss(animated: true)
     }
     
@@ -258,9 +270,9 @@ final class CreateHabitViewController: UIViewController {
         }, for: .touchUpInside)
         scheduleButton.addAction(UIAction { [weak self] _ in
             self?.scheduleButtonTapped()
-        }
-                                 , for: .touchUpInside)
+        }, for: .touchUpInside)
     }
+    
     private func setupEmojiCollectionView() {
         emojiCollectionView.register(EmojiCollectionViewCell.self, forCellWithReuseIdentifier: EmojiCollectionViewCell.reuseIdentifier)
         emojiCollectionView.dataSource = self
@@ -269,7 +281,7 @@ final class CreateHabitViewController: UIViewController {
         emojiCollectionView.allowsMultipleSelection = false
         emojiCollectionView.register(HeaderCollectionReusableView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: HeaderCollectionReusableView.reuseIdentifier)
     }
-
+    
     private func setupColorCollectionView() {
         colorCollectionView.register(ColorCollectionViewCell.self, forCellWithReuseIdentifier: ColorCollectionViewCell.reuseIdentifier)
         colorCollectionView.dataSource = self
@@ -315,14 +327,14 @@ final class CreateHabitViewController: UIViewController {
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             scrollView.bottomAnchor.constraint(equalTo: bottomButtonsStackView.topAnchor, constant: -8),
-
+            
             stackView.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor),
             stackView.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor),
             stackView.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor),
             stackView.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor),
-
+            
             stackView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor),
-
+            
             bottomButtonsStackView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
             bottomButtonsStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             bottomButtonsStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
@@ -353,6 +365,9 @@ final class CreateHabitViewController: UIViewController {
         
         if title == "Расписание" {
             scheduleSubtitleLabel = sublabel
+        }
+        if title == "Категория" {
+            categorySubtitleLabel = sublabel
         }
         
         let labelsStackView = UIStackView(arrangedSubviews: [label, sublabel])
@@ -400,12 +415,21 @@ final class CreateHabitViewController: UIViewController {
             }
         }
     }
-
+    
+    private func updateCategorySubtitle(with category: TrackerCategory?) {
+        if category == nil {
+            categorySubtitleLabel?.text = nil
+        } else {
+            let name = category?.name ?? ""
+            categorySubtitleLabel?.text = name
+        }
+    }
+    
     func checkTrackerConditionsToBeTrue() {
         let symbolsCount = nameTextField.text?.count ?? 0
         let nameIsValid = (1...Constants.symbolsLimit).contains(symbolsCount)
-
-        let canCreate = nameIsValid && !chosenDays.isEmpty && chosenEmoji != nil && chosenColor != nil
+        
+        let canCreate = nameIsValid && !chosenDays.isEmpty && chosenEmoji != nil && chosenColor != nil && category != nil
         changeCreateButtonAvailability(to: canCreate)
     }
     
@@ -469,8 +493,8 @@ extension CreateHabitViewController: HabitScheduleViewControllerDelegate {
 extension CreateHabitViewController: UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         collectionView == emojiCollectionView ? emojis.count
-           : collectionView == colorCollectionView ? colors.count
-           : 1
+        : collectionView == colorCollectionView ? colors.count
+        : 1
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
