@@ -183,7 +183,8 @@ final class CreateHabitViewController: UIViewController {
     
     // MARK: - User Actions Handlers
     private func categoryButtonTapped() {
-        let vc = HabitCategoriesViewController()
+        let viewModel = HabitCategoriesViewModel()
+        let vc = HabitCategoriesViewController(viewModel: viewModel)
         vc.modalPresentationStyle = .pageSheet
         vc.onCategoryPicked = { [weak self] category in
             self?.userPickedCategory(category)
@@ -420,8 +421,7 @@ final class CreateHabitViewController: UIViewController {
         if category == nil {
             categorySubtitleLabel?.text = nil
         } else {
-            let name = category?.name ?? ""
-            categorySubtitleLabel?.text = name
+            categorySubtitleLabel?.text = category?.name ?? ""
         }
     }
     

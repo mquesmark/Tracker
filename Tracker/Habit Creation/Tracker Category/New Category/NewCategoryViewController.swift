@@ -8,6 +8,10 @@ final class NewCategoryViewController: UIViewController {
     
     private var symbols: Int = 0
     
+    private enum Constants {
+        static let symbolsLimit: Int = 38
+    }
+    
     private var showWarningAnimationStarted = false
     private var hideWarningAnimationStarted = false
     
@@ -40,7 +44,7 @@ final class NewCategoryViewController: UIViewController {
         let label = UILabel()
         label.font = .systemFont(ofSize: 17, weight: .regular)
         label.textColor = .ypRed
-        label.text = "Ограничение 38 символов"
+        label.text = "Ограничение \(Constants.symbolsLimit) символов"
         label.textAlignment = .center
         label.isHidden = true
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -129,21 +133,14 @@ final class NewCategoryViewController: UIViewController {
     }
     
     private func checkButtonConditions() {
-        if (1...38).contains(symbols) {
-            button.isUserInteractionEnabled = true
-            button.backgroundColor = .blackDay
-        } else {
-            button.backgroundColor = .ypGray
-            button.isUserInteractionEnabled = false
-        }
+        let isValid = (1...Constants.symbolsLimit).contains(symbols)
+        button.isUserInteractionEnabled = isValid
+        button.backgroundColor = isValid ? .blackDay : .ypGray
     }
     
+    
     private func decideShowOrHideSymbolsLimitLabel() {
-        if symbols > 38 {
-            showSymbolsLimitLabel()
-        } else {
-            hideSymbolsLimitLabel()
-        }
+        symbols > Constants.symbolsLimit ? showSymbolsLimitLabel() : hideSymbolsLimitLabel()
     }
     
     private func showSymbolsLimitLabel() {

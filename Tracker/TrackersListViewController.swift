@@ -216,9 +216,7 @@ final class TrackersListViewController: UIViewController {
     private func onboardingCheck() {
         let isSeen: Bool = UserDefaults.standard.bool(forKey: "onboardingSeen")
         
-        if isSeen {
-            return
-        } else {
+        if !isSeen {
             let onboardingPageVC = OnboardingPageViewController()
             onboardingPageVC.modalPresentationStyle = .fullScreen
             present(onboardingPageVC, animated: false)

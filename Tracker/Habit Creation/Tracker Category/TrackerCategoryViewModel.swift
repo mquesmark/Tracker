@@ -19,7 +19,7 @@ final class HabitCategoriesViewModel {
     private(set) var selectedIndex: Int?
 
     func isSelectedCategory(at index: Int) -> Bool {
-        return selectedIndex == index
+        selectedIndex == index
     }
 
     func userSelectedCategory(at index: Int) {

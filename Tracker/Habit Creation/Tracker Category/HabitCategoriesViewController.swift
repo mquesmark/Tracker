@@ -4,7 +4,8 @@ final class HabitCategoriesViewController: UIViewController {
     
     var onCategoryPicked: ((TrackerCategory) -> Void)?
     
-    private let viewModel = HabitCategoriesViewModel()
+    private let viewModel: HabitCategoriesViewModel
+    
     private let tableView: UITableView = {
         let v = UITableView()
         v.rowHeight = 75
@@ -62,6 +63,12 @@ final class HabitCategoriesViewController: UIViewController {
         b.translatesAutoresizingMaskIntoConstraints = false
         return b
     }()
+    
+    init(viewModel: HabitCategoriesViewModel) {
+        self.viewModel = viewModel
+        super.init(nibName: nil, bundle: nil)
+    }
+    required init?(coder: NSCoder) { nil }
     
     // MARK: - Lifecycle
     

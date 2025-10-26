@@ -46,25 +46,11 @@ final class OnboardingPageViewController: UIPageViewController, UIPageViewContro
     }
     
     func pageViewController(_ pageViewController: UIPageViewController, viewControllerBefore viewController: UIViewController) -> UIViewController? {
-        guard let vcIndex = pages.firstIndex(of: viewController) else { return nil }
-        var otherIndex: Int
-        if vcIndex == 0 {
-            otherIndex = 1
-        } else {
-            otherIndex = 0
-        }
-        return pages[otherIndex]
+   nextPage(for: viewController)
     }
     
     func pageViewController(_ pageViewController: UIPageViewController, viewControllerAfter viewController: UIViewController) -> UIViewController? {
-        guard let vcIndex = pages.firstIndex(of: viewController) else { return nil }
-        var otherIndex: Int
-        if vcIndex == 0 {
-            otherIndex = 1
-        } else {
-            otherIndex = 0
-        }
-        return pages[otherIndex]
+        nextPage(for: viewController)
     }
     
     func pageViewController(_ pageViewController: UIPageViewController, didFinishAnimating finished: Bool, previousViewControllers: [UIViewController], transitionCompleted completed: Bool) {
@@ -92,6 +78,12 @@ final class OnboardingPageViewController: UIPageViewController, UIPageViewContro
             pageControl.bottomAnchor.constraint(equalTo: button.topAnchor, constant: -24),
             pageControl.centerXAnchor.constraint(equalTo: view.centerXAnchor)
         ])
+    }
+    
+    private func nextPage(for viewController: UIViewController) -> UIViewController? {
+        guard let index = pages.firstIndex(of: viewController) else { return nil }
+        let nextIndex = index == 0 ? 1 : 0
+        return pages[nextIndex]
     }
     
     private func buttonTapped() {
