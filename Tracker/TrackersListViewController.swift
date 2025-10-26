@@ -90,6 +90,7 @@ final class TrackersListViewController: UIViewController {
         trackerStore = TrackerStore.shared
         trackerStore.delegate = self
         trackerStore.updateDate(datePicker.date)
+        onboardingCheck()
     }
     
     // MARK: - UI Setup
@@ -212,6 +213,15 @@ final class TrackersListViewController: UIViewController {
         }
     }
     
+    private func onboardingCheck() {
+        let isSeen: Bool = UserDefaults.standard.bool(forKey: "onboardingSeen")
+        
+        if !isSeen {
+            let onboardingPageVC = OnboardingPageViewController()
+            onboardingPageVC.modalPresentationStyle = .fullScreen
+            present(onboardingPageVC, animated: false)
+        }
+    }
     
     // MARK: - User Actions Handlers
     
@@ -319,13 +329,13 @@ extension TrackersListViewController: CreateHabitViewControllerDelegate {
 extension TrackersListViewController: TrackerStoreDelegate {
     func store(_ store: TrackerStore, didUpdate update: TrackerStoreUpdate) {
         collectionView.performBatchUpdates {
-            if !update.insertedSections.isEmpty {
-                collectionView.insertSections(update.insertedSections)
-            }
             if !update.deletedSections.isEmpty {
                 collectionView.deleteSections(update.deletedSections)
             }
-
+            if !update.insertedSections.isEmpty {
+                collectionView.insertSections(update.insertedSections)
+            }
+            
             if !update.inserted.isEmpty {
                 collectionView.insertItems(at: update.inserted)
             }
