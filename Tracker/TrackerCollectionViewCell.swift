@@ -76,10 +76,11 @@ final class TrackerCollectionViewCell: UICollectionViewCell {
     func configure(withTracker tracker: Tracker, isCompleted: Bool, daysCompleted: Int) {
         emojiLabel.text = tracker.emoji
         nameLabel.text = tracker.name
-        streakLabel.text = daysWordDeclension(daysCompleted)
+        let format = NSLocalizedString("days_count", comment: "Count of days when tracker was completed")
+        streakLabel.text = String.localizedStringWithFormat(format, daysCompleted)
         cardView.backgroundColor = tracker.color
         plusButton.backgroundColor = tracker.color
-
+        print(Locale.current.identifier)
         if let oldAction = plusAction {
             plusButton.removeAction(oldAction, for: .touchUpInside)
         }
@@ -107,24 +108,6 @@ final class TrackerCollectionViewCell: UICollectionViewCell {
             plusButton.alpha = 1
         }
         
-    }
-
-    private func daysWordDeclension(_ days: Int) -> String {
-        let lastTwo = days % 100
-        let lastOne = days % 10
-        
-        if lastTwo >= 11 && lastTwo <= 14 {
-            return "\(days) дней"
-        }
-        
-        switch lastOne {
-        case 1:
-            return "\(days) день"
-        case 2, 3, 4:
-            return "\(days) дня"
-        default:
-            return "\(days) дней"
-        }
     }
 
     private func setupViews() {
