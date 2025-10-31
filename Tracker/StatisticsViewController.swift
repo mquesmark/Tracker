@@ -43,7 +43,6 @@ final class StatisticsViewController: UIViewController {
                     try persistentStoreCoordinator.destroyPersistentStore(at: store.url!, ofType: store.type, options: nil)
                     try persistentStoreCoordinator.addPersistentStore(ofType: store.type, configurationName: nil, at: store.url, options: nil)
                 } catch {
-                    print("Failed to reset Core Data store: \(error)")
                 }
             }
             
@@ -64,7 +63,6 @@ final class StatisticsViewController: UIViewController {
                         try fileManager.removeItem(at: file)
                     }
                 } catch {
-                    print("Failed to clear caches directory: \(error)")
                 }
             }
             

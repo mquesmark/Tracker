@@ -10,11 +10,10 @@ final class TrackerCategoryStore {
     
     func addCategory(_ category: TrackerCategory) {
         guard !isCategoryExists(category) else {
-            print("Category already exists: \(category.name)")
             return
         }
         let categoryCD = TrackerCategoryCoreData(context: context)
-        categoryCD.name = category.name        
+        categoryCD.name = category.name
         try? context.save()
     }
     
@@ -24,7 +23,6 @@ final class TrackerCategoryStore {
             let categoriesCD = try context.fetch(fetchRequest)
             return categoriesCD.map { TrackerCategory(name: $0.name ?? "", trackers: []) }
         } catch {
-            print("Ошибка при получении категорий: \(error)")
             return []
         }
     }
@@ -37,7 +35,6 @@ final class TrackerCategoryStore {
             let count = try context.count(for: fetchRequest)
             return count > 0
         } catch {
-            print("Ошибка при проверке существования категории: \(error)")
             return false
         }
     }

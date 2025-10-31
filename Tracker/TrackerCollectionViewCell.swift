@@ -80,7 +80,6 @@ final class TrackerCollectionViewCell: UICollectionViewCell {
         streakLabel.text = String.localizedStringWithFormat(format, daysCompleted)
         cardView.backgroundColor = tracker.color
         plusButton.backgroundColor = tracker.color
-        print(Locale.current.identifier)
         if let oldAction = plusAction {
             plusButton.removeAction(oldAction, for: .touchUpInside)
         }

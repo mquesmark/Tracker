@@ -78,16 +78,12 @@ final class TrackerStore: NSObject {
         } else if let storedColor = trackerCD.color as? UIColor {
             color = storedColor
         } else {
-            print("❌ Ошибка: не удалось декодировать цвет — фактический тип: \(type(of: trackerCD.color))")
             return nil
         }
         
         guard let schedule = trackerCD.schedule as? [WeekDay] else {
-            print("❌ Ошибка: schedule не [WeekDay] — фактический тип: \(type(of: trackerCD.schedule))")
             return nil
         }
-        
-        print("✅ Успешно конвертирован трекер:", name)
         
         return Tracker(
             id: id,
@@ -114,7 +110,6 @@ final class TrackerStore: NSObject {
             let newCategory = TrackerCategoryCoreData(context: context)
             newCategory.name = categoryName
             category = newCategory
-            print("Created new category: \(categoryName)")
         }
         let trackerCD = TrackerCoreData(context: context)
         trackerCD.name = tracker.name
@@ -125,14 +120,11 @@ final class TrackerStore: NSObject {
         trackerCD.category = category
         
         try? context.save()
-        print("💾 Tracker added: \(tracker.name)")
         
         do {
             try self.fetchedResultsController?.performFetch()
             self.delegate?.storeDidReloadData(self)
-            print("🔁 Soft refetch after toggleRecord (UI sync)")
         } catch {
-            print("❌ Fetch error after toggle:", error)
         }
     }
     
@@ -199,10 +191,6 @@ extension TrackerStore: NSFetchedResultsControllerDelegate {
         movedIndexPaths = []
         insertedSections = []
         deletedSections = []
-        print("🔄 FRC will change content")
-        print("Sections count: \(controller.sections?.count ?? 0)")
-        let totalObjects = controller.sections?.map(\.numberOfObjects).reduce(0, +) ?? 0
-        print("Total objects before changes: \(totalObjects)")
     }
     
     func controller(
@@ -228,10 +216,6 @@ extension TrackerStore: NSFetchedResultsControllerDelegate {
         @unknown default:
             break
         }
-        print("🔹 Change type:", type, "at", indexPath ?? "-", "new:", newIndexPath ?? "-")
-        print("Sections count: \(controller.sections?.count ?? 0)")
-        let totalObjects = controller.sections?.map(\.numberOfObjects).reduce(0, +) ?? 0
-        print("Total objects after change: \(totalObjects)")
     }
     
     func controller(_ controller: NSFetchedResultsController<any NSFetchRequestResult>, didChange sectionInfo: any NSFetchedResultsSectionInfo, atSectionIndex sectionIndex: Int, for type: NSFetchedResultsChangeType) {
@@ -243,18 +227,10 @@ extension TrackerStore: NSFetchedResultsControllerDelegate {
         default:
             break
         }
-        print("🔸 Section change type:", type, "at section:", sectionIndex)
-        print("Sections count: \(controller.sections?.count ?? 0)")
-        let totalObjects = controller.sections?.map(\.numberOfObjects).reduce(0, +) ?? 0
-        print("Total objects after section change: \(totalObjects)")
     }
     func controllerDidChangeContent(
         _ controller: NSFetchedResultsController<any NSFetchRequestResult>
     ) {
-        print("🔄 FRC did change content")
-        print("Sections count: \(controller.sections?.count ?? 0)")
-        let totalObjects = controller.sections?.map(\.numberOfObjects).reduce(0, +) ?? 0
-        print("Total objects after changes: \(totalObjects)")
         delegate?.store(
             self,
             didUpdate: TrackerStoreUpdate(
@@ -279,16 +255,13 @@ extension TrackerStore: NSFetchedResultsControllerDelegate {
 extension TrackerStore {
     
     func toggleRecord(for tracker: Tracker, for date: Date) {
-        print("🔄 toggleRecord: \(tracker.name) \(date)")
         
         let rs = TrackerRecordStore.shared
         let record = TrackerRecord(trackerId: tracker.id, dateLogged: date)
         if rs.isCompleted(trackerId: tracker.id, date: date) {
             rs.removeRecord(record)
-            print("🔄 toggleRecord completed for \(tracker.name)")
         } else {
             rs.addRecord(record)
-            print("🔄 toggleRecord completed for \(tracker.name)")
         }
         context.refreshAllObjects()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) { [weak self] in
@@ -296,9 +269,7 @@ extension TrackerStore {
             do {
                 try self.fetchedResultsController?.performFetch()
                 self.delegate?.storeDidReloadData(self)
-                print("🔁 Soft refetch after toggleRecord (UI sync)")
             } catch {
-                print("❌ Fetch error after toggle:", error)
             }
         }
         

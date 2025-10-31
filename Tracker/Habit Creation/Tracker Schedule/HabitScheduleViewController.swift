@@ -142,6 +142,5 @@ extension HabitScheduleViewController: ScheduleCellDelegate {
         } else {
             chosenDays.remove(day)
         }
-        print("ActiveDays: \(chosenDays.sorted { $0.rawValue < $1.rawValue }.map { $0.title })")
     }
 }

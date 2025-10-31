@@ -22,7 +22,6 @@ final class TrackerRecordStore {
         
         do {
             guard let trackerCD = try context.fetch(trackerFetch).first else {
-                print("⚠️ Tracker with ID \(record.trackerId) not found. File \(#file), line:  \(#line) ")
                 return
             }
             
@@ -34,12 +33,8 @@ final class TrackerRecordStore {
             recordCD.dateLogged = record.dateLogged
             recordCD.tracker = trackerCD
             
-            print("💾 Saving record...")
             try context.save()
-            print("✅ Context save complete")
-            print("✅ Saved record for \(record.trackerId) on \(record.dateLogged)")
         } catch {
-            print("❌ Error saving record for trackerID \(record.trackerId): \(error). File \(#file), line:  \(#line)")
         }
     }
     
@@ -56,18 +51,13 @@ final class TrackerRecordStore {
         do {
             if let recordCD = try context.fetch(fetch).first {
                 context.delete(recordCD)
-                print("💾 Saving record...")
                 try context.save()
-                print("✅ Context save complete")
-                print("🗑 Removed record for \(record.trackerId) at \(record.dateLogged)")
             }
         } catch {
-            print("❌ Error removing record for trackerID \(record.trackerId): \(error). File \(#file), line \(#line)")
         }
     }
     
     func isCompleted(trackerId: UUID, date: Date) -> Bool {
-        print("🔍 Checking if completed for \(trackerId) on \(date)")
         let (start, end) = dayBounds(for: date)
         
         let fetch = NSFetchRequest<TrackerRecordCoreData>(entityName: "TrackerRecordCoreData")
@@ -78,24 +68,19 @@ final class TrackerRecordStore {
         
         do {
             let result = try context.count(for: fetch) > 0
-            print("🔍 Completed check result: \(result)")
             return result
         } catch {
-            print("❌ Error checking completion for trackerID \(trackerId): \(error). File \(#file), line \(#line)")
             return false
         }
     }
     
     func countRecords(for trackerId: UUID) -> Int {
-        print("🔍 Counting records for \(trackerId)")
         let fetch = NSFetchRequest<TrackerRecordCoreData>(entityName: "TrackerRecordCoreData")
         fetch.predicate = NSPredicate(format: "tracker.id == %@", trackerId as CVarArg)
         do {
             let count = try context.count(for: fetch)
-            print("🔍 Found \(count) records for \(trackerId)")
             return count
         } catch {
-            print("❌ Error counting records for trackerID \(trackerId): \(error)")
             return 0
         }
     }
