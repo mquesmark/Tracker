@@ -23,7 +23,7 @@ final class OnboardingPageViewController: UIPageViewController, UIPageViewContro
         b.backgroundColor = .blackDay
         b.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
         b.titleLabel?.textColor = .whiteDay
-        b.setTitle("Вот это технологии!", for: .normal)
+        b.setTitle(NSLocalizedString("wow_technologies", comment: "Text to skip onboarding"), for: .normal)
         b.layer.cornerRadius = 16
         b.clipsToBounds = true
         b.translatesAutoresizingMaskIntoConstraints = false

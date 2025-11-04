@@ -19,7 +19,7 @@ final class HabitCategoriesViewController: UIViewController {
     
     private let topLabel: UILabel = {
         let l = UILabel()
-        l.text = "Категория"
+        l.text = NSLocalizedString("category", comment: "Category title")
         l.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         l.textColor = .blackDay
         l.numberOfLines = 1
@@ -34,7 +34,7 @@ final class HabitCategoriesViewController: UIViewController {
     }()
     private let starText: UILabel = {
         let l = UILabel()
-        l.text = "Привычки и события можно\nобъединить по смыслу"
+        l.text = NSLocalizedString("categories_star_text", comment: "Text for star image")
         l.font = UIFont.systemFont(ofSize: 12, weight: .medium)
         l.numberOfLines = 0
         l.textAlignment = .center
@@ -58,7 +58,7 @@ final class HabitCategoriesViewController: UIViewController {
         b.clipsToBounds = true
         b.backgroundColor = .blackDay
         b.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
-        b.setTitle("Добавить категорию", for: .normal)
+        b.setTitle(NSLocalizedString("add_category", comment: "Add category button title"), for: .normal)
         b.setTitleColor(.whiteDay, for: .normal)
         b.translatesAutoresizingMaskIntoConstraints = false
         return b
@@ -111,7 +111,7 @@ final class HabitCategoriesViewController: UIViewController {
     private func setupTableView() {
         tableView.delegate = self
         tableView.dataSource = self
-        tableView.register(HabitCategoriesTableViewCell.self, forCellReuseIdentifier: HabitCategoriesTableViewCell.reuseIdentifier)
+        tableView.register(ParametersTableViewCell.self, forCellReuseIdentifier: ParametersTableViewCell.reuseIdentifier)
         view.addSubview(tableView)
         
         NSLayoutConstraint.activate([
@@ -162,7 +162,7 @@ extension HabitCategoriesViewController: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: HabitCategoriesTableViewCell.reuseIdentifier, for: indexPath) as? HabitCategoriesTableViewCell ?? HabitCategoriesTableViewCell()
+        let cell = tableView.dequeueReusableCell(withIdentifier: ParametersTableViewCell.reuseIdentifier, for: indexPath) as? ParametersTableViewCell ?? ParametersTableViewCell()
         let name = viewModel.categoryName(at: indexPath.row)
         let isSelected = viewModel.isSelectedCategory(at: indexPath.row)
         cell.configure(title: name, isSelected: isSelected)

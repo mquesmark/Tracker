@@ -13,7 +13,7 @@ final class HabitScheduleViewController: UIViewController {
     
     private let topLabel: UILabel = {
         let label = UILabel()
-        label.text = "Расписание"
+        label.text = NSLocalizedString("schedule", comment: "Schedule title")
         label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         label.textColor = .blackDay
         label.numberOfLines = 1
@@ -25,7 +25,7 @@ final class HabitScheduleViewController: UIViewController {
     
     private let doneButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("Готово", for: .normal)
+        button.setTitle(NSLocalizedString("done", comment: "Done button title"), for: .normal)
         button.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
         button.setTitleColor(.whiteDay, for: .normal)
         button.backgroundColor = .blackDay

@@ -56,10 +56,10 @@ final class OnboardingViewController: UIViewController {
         switch page {
         case 2:
             backgroundImageView.image = UIImage(resource: ._2)
-            titleLabel.text = "Даже если это не литры воды и йога"
+            titleLabel.text = NSLocalizedString("even_if_this_not", comment: "Text describing what you can track part 2")
         default:
             backgroundImageView.image = UIImage(resource: ._1)
-            titleLabel.text = "Отслеживайте только то, что хотите"
+            titleLabel.text = NSLocalizedString("track_what_you_want", comment: "Text describing what you can track")
         }
         
     }

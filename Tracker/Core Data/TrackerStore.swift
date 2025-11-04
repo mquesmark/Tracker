@@ -32,6 +32,8 @@ final class TrackerStore: NSObject {
     
     
     private var currentDate: Date = Date()
+    private var currentSearchText: String? = nil
+    private var currentFilter: TrackerFilter? = nil
     private var context: NSManagedObjectContext
     weak var delegate: TrackerStoreDelegate?
     private var fetchedResultsController:
@@ -94,7 +96,7 @@ final class TrackerStore: NSObject {
         )
     }
     func titleForSection(_ section: Int) -> String {
-        fetchedResultsController?.sections?[section].name ?? "Категория по умолчанию"
+        fetchedResultsController?.sections?[section].name ?? NSLocalizedString("default_category", comment: "Default category text")
     }
     
     
@@ -128,17 +130,59 @@ final class TrackerStore: NSObject {
         }
     }
     
-    private func setupFetchedResultsController(for date: Date) {
-        let request = TrackerCoreData.fetchRequest()
+    private func buildPredicate(for date: Date, searchText text: String?) -> NSPredicate? {
+        var predicates: [NSPredicate] = []
+        
+        let effectiveDate: Date = (currentFilter == .today) ? Date() : date
         
         var calendar = Calendar.current
         calendar.firstWeekday = 2
-        let weekdayNumber = calendar.component(.weekday, from: date)
+        let weekdayNumber = calendar.component(.weekday, from: effectiveDate)
         let adjusted = weekdayNumber == 1 ? 7 : weekdayNumber - 1
-        let weekday = WeekDay(rawValue: adjusted)
-        if let weekday {
-            request.predicate = NSPredicate(format: "schedule CONTAINS %@", NSNumber(value: weekday.rawValue))
+
+        if let weekday = WeekDay(rawValue: adjusted) {
+            let schedulePredicate = NSPredicate(format: "schedule CONTAINS %@", NSNumber(value: weekday.rawValue))
+            predicates.append(schedulePredicate)
         }
+        
+        if let text = text?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty {
+            let namePredicate = NSPredicate(format: "name CONTAINS[cd] %@", text)
+            predicates.append(namePredicate)
+        }
+        if currentFilter == .completed || currentFilter == .notCompleted {
+            let ids = completedTrackerIDs(on: effectiveDate)
+            if currentFilter == .completed {
+                predicates.append(NSPredicate(format: "id IN %@", ids as [UUID]))
+            } else if currentFilter == .notCompleted {
+                predicates.append(NSPredicate(format: "NOT (id IN %@)", ids as [UUID]))
+            }
+        }
+        if predicates.isEmpty {
+            return nil
+        }
+        return NSCompoundPredicate(andPredicateWithSubpredicates: predicates)
+    }
+    
+    private func completedTrackerIDs(on date: Date) -> [UUID] {
+        let request: NSFetchRequest<TrackerRecordCoreData> = TrackerRecordCoreData.fetchRequest()
+        
+        let calendar = Calendar.current
+        let start = calendar.startOfDay(for: date)
+        guard let end = calendar.date(byAdding: .day, value: 1, to: start) else { return [] }
+        
+        request.predicate = NSPredicate(format: "dateLogged >= %@ AND dateLogged < %@", start as NSDate, end as NSDate)
+        
+        do {
+            let records = try context.fetch(request)
+            return records.compactMap { $0.tracker?.id }
+        } catch {
+            return []
+        }
+    }
+    
+    private func setupFetchedResultsController(for date: Date) {
+        let request = TrackerCoreData.fetchRequest()
+        request.predicate = buildPredicate(for: date, searchText: currentSearchText)
         
         request.sortDescriptors = [
             NSSortDescriptor(keyPath: \TrackerCoreData.category?.name, ascending: true),
@@ -157,21 +201,29 @@ final class TrackerStore: NSObject {
     
     func updateDate(_ newDate: Date) {
         currentDate = newDate
+        fetchedResultsController?.fetchRequest.predicate = buildPredicate(for: newDate, searchText: currentSearchText)
         
-        var calendar = Calendar.current
-        calendar.firstWeekday = 2
-        let weekdayNumber = calendar.component(.weekday, from: newDate)
-        let adjusted = weekdayNumber == 1 ? 7 : weekdayNumber - 1
-        let weekday = WeekDay(rawValue: adjusted)
-        
-        if let weekday {
-            fetchedResultsController?.fetchRequest.predicate = NSPredicate(
-                format: "schedule CONTAINS %@", NSNumber(value: weekday.rawValue)
-            )
-        } else {
-            fetchedResultsController?.fetchRequest.predicate = nil
+        try? fetchedResultsController?.performFetch()
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.delegate?.storeDidReloadData(self)
         }
+    }
+    
+    func updateSearchText(_ text: String?) {
+        currentSearchText = text
+        fetchedResultsController?.fetchRequest.predicate = buildPredicate(for: currentDate, searchText: currentSearchText)
+        try? fetchedResultsController?.performFetch()
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.delegate?.storeDidReloadData(self)
+        }
+    }
+    
+    func updateFilter(_ filter: TrackerFilter?) {
+        currentFilter = filter
         
+        fetchedResultsController?.fetchRequest.predicate = buildPredicate(for: currentDate, searchText: currentSearchText)
         try? fetchedResultsController?.performFetch()
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }

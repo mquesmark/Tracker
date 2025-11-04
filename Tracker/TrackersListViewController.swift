@@ -13,8 +13,25 @@ final class TrackersListViewController: UIViewController {
     
     private var recordStore: TrackerRecordStore = .shared
     
+    private var isSearchOrFilterActive: Bool = false {
+        didSet {
+            starStackVisibilityCheck()
+        }
+    }
+
+    private func updateSearchOrFilterFlag() {
+        let hasSearch = !(searchField.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: Date())
+        let selected = cal.startOfDay(for: datePicker.date)
+        let isOtherDate = (selected != today)
+        self.isSearchOrFilterActive = hasSearch || isOtherDate || currentFilter == .today || currentFilter == .completed || currentFilter == .notCompleted
+    }
+    
     private var currentDate: Date = Date()
-            
+    private var currentFilter: TrackerFilter? = nil
+    private var lastNonTodayDate: Date?
+    
     private let collectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         
@@ -37,7 +54,7 @@ final class TrackersListViewController: UIViewController {
         let label = UILabel()
         label.font = .systemFont(ofSize: 34, weight: .bold)
         label.textColor = .blackDay
-        label.text = "Трекеры"
+        label.text = NSLocalizedString("trackers", comment: "trackers list title")
         
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -45,7 +62,7 @@ final class TrackersListViewController: UIViewController {
     
     private let searchField: UISearchTextField = {
         let tf = UISearchTextField()
-        tf.placeholder = "Поиск"
+        tf.placeholder = NSLocalizedString("search", comment: "Search placeholder text")
         tf.font = .systemFont(ofSize: 17, weight: .regular)
         tf.background = nil
         tf.backgroundColor = .clear
@@ -70,13 +87,25 @@ final class TrackersListViewController: UIViewController {
         let label = UILabel()
         label.font = .systemFont(ofSize: 12, weight: .medium)
         label.textColor = .blackDay
-        label.text = "Что будем отслеживать?"
-        
         label.translatesAutoresizingMaskIntoConstraints = false
+        label.text = NSLocalizedString("star_text_label", comment: "Star text label")
+
         return label
     }()
     
     private let starStackView = UIStackView()
+    
+    private let filtersButton: UIButton = {
+        let b = UIButton()
+        b.backgroundColor = .ypBlue
+        b.setTitle(NSLocalizedString("filters", comment: "Filter button title"), for: .normal)
+        b.titleLabel?.font = .systemFont(ofSize: 17, weight: .regular)
+        b.titleLabel?.textColor = .whiteDay
+        b.layer.cornerRadius = 16
+        b.clipsToBounds = true
+        b.translatesAutoresizingMaskIntoConstraints = false
+        return b
+    }()
     
     // MARK: - Lifecycle
     
@@ -91,6 +120,8 @@ final class TrackersListViewController: UIViewController {
         trackerStore.delegate = self
         trackerStore.updateDate(datePicker.date)
         onboardingCheck()
+        applyDatePickerInteractivity(for: currentFilter)
+        updateSearchOrFilterFlag()
     }
     
     // MARK: - UI Setup
@@ -124,7 +155,16 @@ final class TrackersListViewController: UIViewController {
             guard let self else { return }
             self.currentDate = datePicker.date
             self.trackerStore.updateDate(datePicker.date)
+            self.updateSearchOrFilterFlag()
         }, for: .valueChanged)
+        
+        searchField.addAction(UIAction { [weak self] _ in
+            self?.searchChanged()
+        }, for: .editingChanged)
+        
+        filtersButton.addAction(UIAction { [weak self] _ in
+            self?.filtersButtonTapped()
+        }, for: .touchUpInside)
         
         starStackView.axis = .vertical
         starStackView.spacing = 8
@@ -137,6 +177,8 @@ final class TrackersListViewController: UIViewController {
         view.addSubview(starStackView)
         
         view.addSubview(collectionView)
+        
+        view.addSubview(filtersButton)
     }
     
     private func setupConstraints() {
@@ -179,7 +221,12 @@ final class TrackersListViewController: UIViewController {
             collectionView.leadingAnchor.constraint(
                 equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             collectionView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
-            collectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+            collectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            
+            filtersButton.heightAnchor.constraint(equalToConstant: 50),
+            filtersButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -130),
+            filtersButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 130),
+            filtersButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
         ])
     }
     
@@ -191,6 +238,14 @@ final class TrackersListViewController: UIViewController {
     }
     
     private func starStackVisibilityCheck() {
+        
+        if isSearchOrFilterActive {
+            starImageView.image = UIImage(resource: .thinking)
+            starTextLabel.text = NSLocalizedString("nothing_found", comment: "Text appears when nothing is found while searching or filtering")
+        } else {
+            starImageView.image = UIImage(resource: .star)
+            starTextLabel.text = NSLocalizedString("star_text_label", comment: "Star text label")
+        }
         
         let sections = collectionView.numberOfSections
         guard sections > 0 else {
@@ -211,6 +266,8 @@ final class TrackersListViewController: UIViewController {
             starStackView.isHidden = true
             collectionView.isHidden = false
         }
+        
+
     }
     
     private func onboardingCheck() {
@@ -230,6 +287,12 @@ final class TrackersListViewController: UIViewController {
         tapGesture.cancelsTouchesInView = false
         view.addGestureRecognizer(tapGesture)
     }
+
+    private func applyDatePickerInteractivity(for filter: TrackerFilter?) {
+        let enabled = (filter != .today)
+        datePicker.isEnabled = enabled
+        datePicker.alpha = enabled ? 1.0 : 0.5
+    }
     
     @objc private func dismissKeyboard() {
         view.endEditing(true)
@@ -240,6 +303,42 @@ final class TrackersListViewController: UIViewController {
         vc.modalPresentationStyle = .pageSheet
         vc.delegate = self
         present(vc, animated: true)
+    }
+    
+    private func searchChanged() {
+        trackerStore.updateSearchText(searchField.text)
+        updateSearchOrFilterFlag()
+    }
+    
+    private func filtersButtonTapped() {
+        let vc = FiltersViewController(selectedFilter: currentFilter)
+        vc.modalPresentationStyle = .pageSheet
+        
+        vc.onFilterPicked = { [weak self] filter in
+            guard let self else { return }
+
+            let previousFilter = self.currentFilter
+            if filter == .today {
+
+                self.lastNonTodayDate = self.datePicker.date
+                let todayDate = Date()
+                self.datePicker.date = todayDate
+                self.currentDate = todayDate
+                self.trackerStore.updateDate(todayDate)
+            } else if previousFilter == .today, let restore = self.lastNonTodayDate {
+
+                self.datePicker.date = restore
+                self.currentDate = restore
+                self.trackerStore.updateDate(restore)
+            }
+
+            self.currentFilter = filter
+            self.trackerStore.updateFilter(filter)
+            self.applyDatePickerInteractivity(for: filter)
+            self.updateSearchOrFilterFlag()
+        }
+        present(vc, animated: true)
+        
     }
     
     // MARK: - Helper Methods
@@ -254,8 +353,8 @@ final class TrackersListViewController: UIViewController {
         let adjusted = (weekday == 1) ? 7 : weekday - 1
         return WeekDay(rawValue: adjusted)
     }
-    
 }
+
 // MARK: - UICollectionViewDataSource Private Methods
 extension TrackersListViewController: UICollectionViewDataSource {
     func numberOfSections(in collectionView: UICollectionView) -> Int { trackerStore.numberOfSections }
@@ -275,7 +374,7 @@ extension TrackersListViewController: UICollectionViewDataSource {
         cell.onPlusTap = { [weak self] in
             guard let self else { return }
             guard self.datePicker.date <= Date() else {
-                AlertService.shared.showAlert(title: "Ошибка", message: "Нельзя выполнить трекер за день, который еще не наступил", viewController: self, actions: [UIAlertAction(title: "Жаль", style: .default)])
+                AlertService.shared.showAlert(title: NSLocalizedString("error", comment: "Error alert title"), message: NSLocalizedString("cant_do_tracker_in_future", comment: "Error alert message when trying to track in future day"), viewController: self, actions: [UIAlertAction(title: NSLocalizedString("sad_ok", comment: "button that dismisses an alert with sad text"), style: .default)])
                 return
             }
             self.trackerStore.toggleRecord(for: tracker, for: self.datePicker.date)

@@ -20,7 +20,7 @@ final class NewCategoryViewController: UIViewController {
         l.font = .systemFont(ofSize: 16, weight: .medium)
         l.textColor = .blackDay
         l.numberOfLines = 1
-        l.text = "Новая категория"
+        l.text = NSLocalizedString("new_category", comment: "New category header label")
         l.textAlignment = .center
         l.translatesAutoresizingMaskIntoConstraints = false
         return l
@@ -29,7 +29,7 @@ final class NewCategoryViewController: UIViewController {
     private let textField: UITextField = {
         let tf = UITextField()
         tf.backgroundColor = .backgroundDay
-        tf.placeholder = "Введите название категории"
+        tf.placeholder = NSLocalizedString("category_name_placeholder", comment: "Placeholder in category name text field")
         tf.layer.cornerRadius = 16
         tf.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 16, height: 0))
         tf.leftViewMode = .always
@@ -44,7 +44,7 @@ final class NewCategoryViewController: UIViewController {
         let label = UILabel()
         label.font = .systemFont(ofSize: 17, weight: .regular)
         label.textColor = .ypRed
-        label.text = "Ограничение \(Constants.symbolsLimit) символов"
+        label.text = String(format: NSLocalizedString("symbols_limit", comment: "Symbols limit warning label"), Constants.symbolsLimit)
         label.textAlignment = .center
         label.isHidden = true
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -56,7 +56,7 @@ final class NewCategoryViewController: UIViewController {
         b.backgroundColor = .blackDay
         b.layer.cornerRadius = 16
         b.clipsToBounds = true
-        b.setTitle("Готово", for: .normal)
+        b.setTitle(NSLocalizedString("done", comment: "Done Button Text"), for: .normal)
         b.setTitleColor(.whiteDay, for: .normal)
         b.translatesAutoresizingMaskIntoConstraints = false
         return b

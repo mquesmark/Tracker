@@ -13,13 +13,9 @@
             <key>NSStringFormatValueTypeKey</key>
             <string>d</string>
             <key>one</key>
-            <string>%d день</string>
-            <key>few</key>
-            <string>%d дня</string>
-            <key>many</key>
-            <string>%d дней</string>
+            <string>%d day</string>
             <key>other</key>
-            <string>%d дней</string>
+            <string>%d days</string>
         </dict>
     </dict>
 </dict>

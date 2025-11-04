@@ -33,7 +33,7 @@ final class CreateHabitViewController: UIViewController {
     
     private let topLabel: UILabel = {
         let label = UILabel()
-        label.text = "Новая привычка"
+        label.text = NSLocalizedString("new_habit", comment: "New Habit Title")
         label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         label.textColor = .blackDay
         label.textAlignment = .center
@@ -43,7 +43,7 @@ final class CreateHabitViewController: UIViewController {
     private let nameTextField: UITextField = {
         let field = UITextField()
         field.attributedPlaceholder = NSAttributedString(
-            string: "Введите название трекера",
+            string: NSLocalizedString("habit_name_placeholder", comment: "Placeholder for habit name"),
             attributes: [.foregroundColor: UIColor.ypGray]
         )
         
@@ -66,15 +66,15 @@ final class CreateHabitViewController: UIViewController {
         let label = UILabel()
         label.font = .systemFont(ofSize: 17, weight: .regular)
         label.textColor = .ypRed
-        label.text = "Ограничение 38 символов"
+        label.text = String(format: NSLocalizedString("symbols_limit", comment: "Text field symbols limit"), Constants.symbolsLimit)
         label.textAlignment = .center
         label.isHidden = true
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
     
-    private lazy var categoryButton = makeParameterButton(title: "Категория")
-    private lazy var scheduleButton = makeParameterButton(title: "Расписание")
+    private lazy var categoryButton = makeParameterButton(title: NSLocalizedString("category", comment: ""))
+    private lazy var scheduleButton = makeParameterButton(title: NSLocalizedString("schedule", comment: ""))
     
     private let separator: UIView = {
         let view = UIView()
@@ -131,7 +131,7 @@ final class CreateHabitViewController: UIViewController {
         let button = UIButton()
         button.layer.borderWidth = 1
         button.layer.borderColor = UIColor.ypRed.cgColor
-        button.setTitle("Отменить", for: .normal)
+        button.setTitle(NSLocalizedString("cancel", comment: "Cancel button label"), for: .normal)
         button.setTitleColor(.ypRed, for: .normal)
         button.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
         button.layer.cornerRadius = 16
@@ -144,7 +144,7 @@ final class CreateHabitViewController: UIViewController {
     private let createButton: UIButton = {
         let button = UIButton()
         button.layer.borderWidth = 0
-        button.setTitle("Создать", for: .normal)
+        button.setTitle(NSLocalizedString("create", comment: "Create button label"), for: .normal)
         button.setTitleColor(.whiteDay, for: .normal)
         button.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
         button.layer.cornerRadius = 16
@@ -364,10 +364,10 @@ final class CreateHabitViewController: UIViewController {
         sublabel.font = .systemFont(ofSize: 17, weight: .regular)
         sublabel.textColor = .ypGray
         
-        if title == "Расписание" {
+        if title == NSLocalizedString("schedule", comment: "") {
             scheduleSubtitleLabel = sublabel
         }
-        if title == "Категория" {
+        if title == NSLocalizedString("category", comment: "") {
             categorySubtitleLabel = sublabel
         }
         
@@ -410,7 +410,7 @@ final class CreateHabitViewController: UIViewController {
             
             let daysTitles = days.map { $0.titleShort }
             if daysTitles.count == 7 {
-                scheduleSubtitleLabel?.text = "Каждый день"
+                scheduleSubtitleLabel?.text = NSLocalizedString("every_day", comment: "Every Day schedule")
             } else {
                 scheduleSubtitleLabel?.text = daysTitles.joined(separator: ", ")
             }
@@ -521,7 +521,7 @@ extension CreateHabitViewController: UICollectionViewDataSource {
             return header
         } else if collectionView == colorCollectionView {
             let header = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: HeaderCollectionReusableView.reuseIdentifier, for: indexPath) as? HeaderCollectionReusableView ?? HeaderCollectionReusableView()
-            header.configure(title: "Цвет")
+            header.configure(title: NSLocalizedString("color", comment: "Color header"))
             return header
         }
         return UICollectionReusableView()

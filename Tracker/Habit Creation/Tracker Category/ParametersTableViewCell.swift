@@ -1,7 +1,7 @@
 import UIKit
 
-final class HabitCategoriesTableViewCell: UITableViewCell {
-    static let reuseIdentifier = "HabitCategoriesTableViewCell"
+final class ParametersTableViewCell: UITableViewCell {
+    static let reuseIdentifier = "ParametersTableViewCell"
     
     let titleLabel: UILabel = {
         let l = UILabel()
