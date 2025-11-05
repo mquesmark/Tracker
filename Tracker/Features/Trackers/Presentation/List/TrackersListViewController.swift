@@ -315,7 +315,7 @@ final class TrackersListViewController: UIViewController {
     }
     
     @objc private func addTrackerButtonTapped() {
-        let vc = CreateHabitViewController()
+        let vc = HabitViewController(mode: .create)
         vc.modalPresentationStyle = .pageSheet
         vc.delegate = self
         present(vc, animated: true)
@@ -410,11 +410,11 @@ extension TrackersListViewController: UICollectionViewDelegate {
         return UIContextMenuConfiguration(identifier: indexPath as NSCopying, previewProvider: nil) { [weak self] _ in
             guard let self else { return nil }
             
-            let edit = UIAction(title: NSLocalizedString("edit", comment: "Edit tracker button"), image: UIImage(systemName: "pencil")) { [weak self] _ in
+            let edit = UIAction(title: NSLocalizedString("edit", comment: "Edit tracker button")) { [weak self] _ in
                 self?.presentEditForItem(at: indexPath)
             }
             
-            let delete = UIAction(title: NSLocalizedString("delete_tracker", comment: "Delete tracker button"), image: UIImage(systemName: "trash"), attributes: .destructive) {[weak self] _ in
+            let delete = UIAction(title: NSLocalizedString("delete", comment: "Delete tracker button"), attributes: .destructive) {[weak self] _ in
                 self?.presentDeleteConfirmation(at: indexPath)
             }
             return UIMenu(children: [edit, delete])
@@ -423,7 +423,15 @@ extension TrackersListViewController: UICollectionViewDelegate {
     }
     
     private func presentEditForItem(at indexPath: IndexPath) {
-        
+        let trackerCD = trackerStore.tracker(at: indexPath)
+        guard let tracker = trackerStore.convertToTracker(trackerCD) else { return }
+        let timesCompleted = recordStore.countRecords(for: tracker.id)
+        let categoryName = trackerCD.category?.name ?? NSLocalizedString("default_category", comment: "Default category text")
+
+        let vc = HabitViewController(mode: .edit(tracker: tracker, daysDone: timesCompleted, categoryName: categoryName))
+        vc.modalPresentationStyle = .pageSheet
+        vc.delegate = self
+        present(vc, animated: true)
     }
     
     private func presentDeleteConfirmation(at indexPath: IndexPath) {
@@ -469,7 +477,11 @@ extension TrackersListViewController: UICollectionViewDelegateFlowLayout {
 }
 
 
-extension TrackersListViewController: CreateHabitViewControllerDelegate {
+extension TrackersListViewController: HabitViewControllerDelegate {
+    func updateTracker(id: UUID, name: String, categoryName: String, schedule: [WeekDay], color: UIColor, emoji: String) {
+        trackerStore.updateTracker(id: id, name: name, categoryName: categoryName, schedule: schedule, color: color, emoji: emoji)
+    }
+    
     
     func createTracker(name: String, categoryName: String, schedule: [WeekDay], color: UIColor, emoji: String) {
         

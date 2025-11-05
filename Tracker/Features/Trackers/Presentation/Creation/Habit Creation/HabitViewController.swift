@@ -1,17 +1,44 @@
+
 import UIKit
 
-protocol CreateHabitViewControllerDelegate: AnyObject {
+protocol HabitViewControllerDelegate: AnyObject {
     func createTracker(name: String, categoryName: String, schedule: [WeekDay], color: UIColor, emoji: String)
+    func updateTracker(id: UUID, name: String, categoryName: String, schedule: [WeekDay], color: UIColor, emoji: String)
 }
 
-final class CreateHabitViewController: UIViewController {
+final class HabitViewController: UIViewController {
+    
+    // MARK: - Nested Types
+    init(mode: Mode) {
+        switch mode {
+        case .create:
+            self.mode = .create
+        case .edit(let tracker, let days, let categoryName):
+            self.mode = .edit(tracker: tracker, daysDone: days, categoryName: categoryName)
+            self.prefill = (tracker, categoryName, days)
+        }
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) { nil }
+    
+    enum Mode {
+        case create
+        case edit(tracker: Tracker, daysDone: Int, categoryName: String)
+    }
+    
+    var prefill: (Tracker, String, Int)?
     
     private enum Constants {
         static let symbolsLimit = 38
     }
     
-    weak var delegate: CreateHabitViewControllerDelegate?
-    private var chosenDays: [WeekDay] = []
+    // MARK: - Dependencies & State
+    
+    private var mode: Mode
+    
+    weak var delegate: HabitViewControllerDelegate?
+    private var chosenDays: [WeekDay] = [.monday, .tuesday, .wednesday, .thursday, .friday, .saturday, .sunday]
     private var category: TrackerCategory?
     
     private var scheduleSubtitleLabel: UILabel?
@@ -20,6 +47,18 @@ final class CreateHabitViewController: UIViewController {
     private var showWarningAnimationStarted = false
     private var hideWarningAnimationStarted = false
     
+    private let emojis: [String] = MockData.emojis
+    private var chosenEmoji: String?
+    
+    private let colors: [UIColor] = [
+        .colorSelection1, .colorSelection2, .colorSelection3, .colorSelection4, .colorSelection5,
+        .colorSelection6, .colorSelection7, .colorSelection8, .colorSelection9, .colorSelection10,
+        .colorSelection11, .colorSelection12, .colorSelection13, .colorSelection14, .colorSelection15,
+        .colorSelection16, .colorSelection17, .colorSelection18
+    ]
+    private var chosenColor: UIColor?
+    
+    // MARK: - UI
     private let scrollView: UIScrollView = {
         let scrollView = UIScrollView()
         return scrollView
@@ -31,13 +70,23 @@ final class CreateHabitViewController: UIViewController {
         return stackView
     }()
     
-    private let topLabel: UILabel = {
+    private let titleLabel: UILabel = {
         let label = UILabel()
-        label.text = NSLocalizedString("new_habit", comment: "New Habit Title")
         label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         label.textColor = .blackDay
         label.textAlignment = .center
         return label
+    }()
+    
+    
+    private let streakLabel: UILabel = {
+        let l = UILabel()
+        l.textAlignment = .center
+        l.font = .systemFont(ofSize: 32, weight: .bold)
+        l.textColor = .blackDay
+        l.text = "0 дней"
+        l.translatesAutoresizingMaskIntoConstraints = false
+        return l
     }()
     
     private let nameTextField: UITextField = {
@@ -84,9 +133,6 @@ final class CreateHabitViewController: UIViewController {
         return view
     }()
     
-    private let emojis: [String] = MockData.emojis
-    private var chosenEmoji: String?
-    
     private let emojiCollectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .vertical
@@ -111,14 +157,6 @@ final class CreateHabitViewController: UIViewController {
         return collection
     }()
     
-    private let colors: [UIColor] = [
-        .colorSelection1, .colorSelection2, .colorSelection3, .colorSelection4, .colorSelection5,
-        .colorSelection6, .colorSelection7, .colorSelection8, .colorSelection9, .colorSelection10,
-        .colorSelection11, .colorSelection12, .colorSelection13, .colorSelection14, .colorSelection15,
-        .colorSelection16, .colorSelection17, .colorSelection18
-    ]
-    private var chosenColor: UIColor?
-    
     private let parametersView: UIView = {
         let view = UIView()
         view.backgroundColor = .backgroundDay
@@ -141,10 +179,9 @@ final class CreateHabitViewController: UIViewController {
         return button
     }()
     
-    private let createButton: UIButton = {
+    private let primaryButton: UIButton = {
         let button = UIButton()
         button.layer.borderWidth = 0
-        button.setTitle(NSLocalizedString("create", comment: "Create button label"), for: .normal)
         button.setTitleColor(.whiteDay, for: .normal)
         button.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
         button.layer.cornerRadius = 16
@@ -161,27 +198,35 @@ final class CreateHabitViewController: UIViewController {
         return stackView
     }()
     
+    // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
         setupConstraints()
         stackViewSetup()
         setupBottomButtonsStackView()
-        changeCreateButtonAvailability(to: false)
+        setPrimaryButtonEnabled(false)
         setupHideKeyboard()
         setupEmojiCollectionView()
         setupColorCollectionView()
+        if case .edit = mode {
+            configure()
+        }
+        
         nameTextField.addAction(UIAction { [weak self] _ in
             self?.checkSymbolsLimit()
-            self?.checkTrackerConditionsToBeTrue()
+            self?.updateFormValidity()
             
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.2, execute: {
                 self?.checkSymbolsLimit()
             }) // Повторный запуск проверки, если вдруг анимации наложились
         }, for: .editingChanged)
+        updateScheduleSubtitle(with: chosenDays)
+        
+
     }
     
-    // MARK: - User Actions Handlers
+    // MARK: - Actions
     private func categoryButtonTapped() {
         let viewModel = HabitCategoriesViewModel()
         let vc = HabitCategoriesViewController(viewModel: viewModel)
@@ -195,7 +240,7 @@ final class CreateHabitViewController: UIViewController {
     private func userPickedCategory(_ category: TrackerCategory) {
         self.category = category
         updateCategorySubtitle(with: category)
-        checkTrackerConditionsToBeTrue()
+        updateFormValidity()
     }
     
     private func scheduleButtonTapped() {
@@ -206,13 +251,26 @@ final class CreateHabitViewController: UIViewController {
         present(vc, animated: true)
     }
     
-    private func createButtonTapped() {
-        createButton.isUserInteractionEnabled = false
+    private func primaryButtonTapped() {
         guard let chosenEmoji, let chosenColor, let name = nameTextField.text, let categoryName = category?.name else { return }
-        delegate?.createTracker(name: name, categoryName: categoryName, schedule: chosenDays, color: chosenColor, emoji: chosenEmoji)
+        primaryButton.isUserInteractionEnabled = false
+        switch mode {
+        case .create:
+            delegate?.createTracker(name: name, categoryName: categoryName, schedule: chosenDays, color: chosenColor, emoji: chosenEmoji)
+        case .edit(let tracker, _, _):
+            delegate?.updateTracker(
+                id: tracker.id,
+                name: name,
+                categoryName: categoryName,
+                schedule: chosenDays,
+                color: chosenColor,
+                emoji: chosenEmoji
+            )
+        }
         dismiss(animated: true)
     }
     
+    // MARK: - Keyboard
     private func setupHideKeyboard() {
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
         tapGesture.cancelsTouchesInView = false
@@ -222,23 +280,44 @@ final class CreateHabitViewController: UIViewController {
     @objc private func dismissKeyboard() {
         view.endEditing(true)
     }
-    // MARK: - UI Setup Private Methods
     
+    // MARK: - UI Setup
     private func setupUI() {
+        let isEditMode: Bool
+        switch mode {
+        case .edit:
+            isEditMode = true
+        default:
+            isEditMode = false
+        }
+        
+        // Заголовок экрана
+        let titleText = isEditMode
+        ? NSLocalizedString("edit_habit", comment: "Edit Habit Title")
+        : NSLocalizedString("new_habit", comment: "New Habit Title")
+        
+        titleLabel.text = titleText
+        
+        // Текст основной кнопки
+        let primaryButtonTitle = isEditMode
+        ? NSLocalizedString("save", comment: "Save button label")
+        : NSLocalizedString("create", comment: "Create button label")
+        primaryButton.setTitle(primaryButtonTitle, for: .normal)
+        
         view.backgroundColor = .whiteDay
     }
     
     private func setupBottomButtonsStackView() {
         bottomButtonsStackView.addArrangedSubview(cancelButton)
-        bottomButtonsStackView.addArrangedSubview(createButton)
+        bottomButtonsStackView.addArrangedSubview(primaryButton)
         bottomButtonsStackView.spacing = 8
         
         cancelButton.addAction(UIAction { [weak self] _ in
             self?.dismiss(animated: true)
         }, for: .touchUpInside)
         
-        createButton.addAction(UIAction { [weak self] _ in
-            self?.createButtonTapped()
+        primaryButton.addAction(UIAction { [weak self] _ in
+            self?.primaryButtonTapped()
         }, for: .touchUpInside)
     }
     
@@ -293,12 +372,17 @@ final class CreateHabitViewController: UIViewController {
     }
     
     private func stackViewSetup() {
-        stackView.addArrangedSubview(topLabel)
+        stackView.addArrangedSubview(titleLabel)
+
+        if case .edit = mode {
+            stackView.addArrangedSubview(streakLabel)
+            stackView.setCustomSpacing(38, after: streakLabel)
+        }
+            stackView.setCustomSpacing(38, after: titleLabel)
+
         stackView.addArrangedSubview(nameTextField)
         stackView.addArrangedSubview(symbolsLimitLabel)
-        
-        stackView.setCustomSpacing(38, after: topLabel)
-        
+
         stackView.isLayoutMarginsRelativeArrangement = true
         stackView.layoutMargins = UIEdgeInsets(top: 24, left: 16, bottom: 0, right: 16)
         stackView.spacing = 24
@@ -403,6 +487,53 @@ final class CreateHabitViewController: UIViewController {
         return button
     }
     
+    private func configure() {
+        
+        guard let prefill else { return }
+        
+        let tracker = prefill.0
+        let categoryName: String = prefill.1
+        
+        let daysCompleted = prefill.2
+        
+        let format = NSLocalizedString("days_count", comment: "Count of days when tracker was completed")
+        streakLabel.text = String.localizedStringWithFormat(format, daysCompleted)
+        
+        // Prefill basic fields
+        nameTextField.text = tracker.name
+        
+        // Schedule
+        chosenDays = tracker.schedule
+        updateScheduleSubtitle(with: chosenDays)
+        
+        // Emoji & Color values for validation
+        chosenEmoji = tracker.emoji
+        chosenColor = tracker.color
+        
+        // Also set category and update subtitle
+        self.category = TrackerCategory(name: categoryName, trackers: [])
+        updateCategorySubtitle(with: category)
+        
+        // Reload collections before selecting items to ensure cells exist
+        emojiCollectionView.reloadData()
+        colorCollectionView.reloadData()
+        
+        // Select emoji item if found
+        if let emoji = chosenEmoji, let emojiIndex = emojis.firstIndex(of: emoji) {
+            let ip = IndexPath(item: emojiIndex, section: 0)
+            emojiCollectionView.selectItem(at: ip, animated: false, scrollPosition: [])
+        }
+        
+        // Select color item if found
+        if let color = chosenColor, let colorIndex = colors.firstIndex(of: color) {
+            let ip = IndexPath(item: colorIndex, section: 0)
+            colorCollectionView.selectItem(at: ip, animated: false, scrollPosition: [])
+        }
+        
+        // Re-evaluate create/save button availability
+        updateFormValidity()
+    }
+    // MARK: - Helpers
     private func updateScheduleSubtitle(with days: [WeekDay]) {
         if days.isEmpty {
             scheduleSubtitleLabel?.text = nil
@@ -425,22 +556,34 @@ final class CreateHabitViewController: UIViewController {
         }
     }
     
-    func checkTrackerConditionsToBeTrue() {
-        let symbolsCount = nameTextField.text?.count ?? 0
-        let nameIsValid = (1...Constants.symbolsLimit).contains(symbolsCount)
+    private func updateFormValidity() {
+        let nameValid = !(nameTextField.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let categoryValid = (category != nil)
+        let scheduleValid = !chosenDays.isEmpty
         
-        let canCreate = nameIsValid && !chosenDays.isEmpty && chosenEmoji != nil && chosenColor != nil && category != nil
-        changeCreateButtonAvailability(to: canCreate)
+        let emojiValid: Bool = {
+            guard let chosenEmoji else { return false }
+            return emojis.contains(chosenEmoji)
+        }()
+        
+        let colorValid: Bool = {
+            guard let chosenColor else { return false }
+            return colors.contains(chosenColor)
+        }()
+        
+        let formValid = nameValid && categoryValid && scheduleValid && emojiValid && colorValid
+        setPrimaryButtonEnabled(formValid)
     }
+    
     
     func checkSymbolsLimit() {
         let symbolsCount = nameTextField.text?.count ?? 0
         symbolsCount > Constants.symbolsLimit ? showSymbolsLimitLabel() : hideSymbolsLimitLabel()
     }
     
-    private func changeCreateButtonAvailability(to available: Bool) {
-        createButton.isUserInteractionEnabled = available
-        createButton.backgroundColor = available ? .blackDay : .ypGray
+    private func setPrimaryButtonEnabled(_ enabled: Bool) {
+        primaryButton.isUserInteractionEnabled = enabled
+        primaryButton.backgroundColor = enabled ? .blackDay : .ypGray
     }
     
     private func showSymbolsLimitLabel() {
@@ -482,15 +625,17 @@ final class CreateHabitViewController: UIViewController {
     }
 }
 
-extension CreateHabitViewController: HabitScheduleViewControllerDelegate {
+// MARK: - HabitScheduleViewControllerDelegate
+extension HabitViewController: HabitScheduleViewControllerDelegate {
     func didSelectDays(_ days: [WeekDay]) {
         chosenDays = days
         updateScheduleSubtitle(with: days)
-        checkTrackerConditionsToBeTrue()
+        updateFormValidity()
     }
 }
 
-extension CreateHabitViewController: UICollectionViewDataSource {
+// MARK: - UICollectionViewDataSource
+extension HabitViewController: UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         collectionView == emojiCollectionView ? emojis.count
         : collectionView == colorCollectionView ? colors.count
@@ -528,19 +673,21 @@ extension CreateHabitViewController: UICollectionViewDataSource {
     }
 }
 
-extension CreateHabitViewController: UICollectionViewDelegate {
+// MARK: - UICollectionViewDelegate
+extension HabitViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if collectionView == emojiCollectionView {
             chosenEmoji = emojis[indexPath.row]
-            checkTrackerConditionsToBeTrue()
+            updateFormValidity()
         } else if collectionView == colorCollectionView {
             chosenColor = colors[indexPath.row]
-            checkTrackerConditionsToBeTrue()
+            updateFormValidity()
         }
     }
 }
 
-extension CreateHabitViewController: UICollectionViewDelegateFlowLayout {
+// MARK: - UICollectionViewDelegateFlowLayout
+extension HabitViewController: UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForHeaderInSection section: Int) -> CGSize { CGSize(width: collectionView.bounds.width, height: 18) }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {

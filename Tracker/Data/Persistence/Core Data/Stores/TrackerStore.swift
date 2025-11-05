@@ -118,9 +118,15 @@ final class TrackerStore: NSObject {
             schedule: schedule
         )
     }
+    
     // MARK: - Section Titles
     func titleForSection(_ section: Int) -> String {
-        fetchedResultsController?.sections?[section].name ?? NSLocalizedString("default_category", comment: "Default category text")
+        guard let sections = fetchedResultsController?.sections,
+              section >= 0, section < sections.count else {
+            return NSLocalizedString("default_category", comment: "Default category text")
+        }
+        let name = sections[section].name
+        return name.isEmpty ? NSLocalizedString("default_category", comment: "Default category text") : name
     }
     
     // MARK: - Create / Add
@@ -313,9 +319,47 @@ extension TrackerStore: NSFetchedResultsControllerDelegate {
 
 // MARK: - CRUD (Edit & Delete) Stubs
 extension TrackerStore {
-    /// Update/Edit an existing tracker. Implementation to be added.
-    func updateTracker(_ tracker: Tracker, inCategoryWithName categoryName: String) {
-        // TODO: Implement tracker editing (update name, emoji, color, schedule, category, etc.)
+
+    /// Updates an existing tracker by id and fields. Creates the category if it doesn't exist.
+    func updateTracker(id: UUID,
+                       name: String,
+                       categoryName: String,
+                       schedule: [WeekDay],
+                       color: UIColor,
+                       emoji: String) {
+        let request: NSFetchRequest<TrackerCoreData> = TrackerCoreData.fetchRequest()
+        request.fetchLimit = 1
+        request.predicate = NSPredicate(format: "id == %@", id as NSUUID)
+
+        do {
+            guard let trackerCD = try context.fetch(request).first else { return }
+
+            // Update primitive fields
+            trackerCD.name = name
+            trackerCD.emoji = emoji
+            trackerCD.color = color
+            trackerCD.schedule = schedule as NSArray
+
+            // Ensure category exists (or create) and assign
+            let catRequest: NSFetchRequest<TrackerCategoryCoreData> = TrackerCategoryCoreData.fetchRequest()
+            catRequest.fetchLimit = 1
+            catRequest.predicate = NSPredicate(format: "name == %@", categoryName)
+            let categoryCD = try context.fetch(catRequest).first ?? {
+                let newCategory = TrackerCategoryCoreData(context: context)
+                newCategory.name = categoryName
+                return newCategory
+            }()
+            trackerCD.category = categoryCD
+
+            try context.save()
+            try self.fetchedResultsController?.performFetch()
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                self.delegate?.storeDidReloadData(self)
+            }
+        } catch {
+            // You may want to log the error in debug builds
+        }
     }
 
     /// Delete an existing tracker. Implementation to be added.

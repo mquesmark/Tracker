@@ -45,3 +45,8 @@
 "today_trackers" = "Трекеры на сегодня";
 "completed_trackers" = "Завершённые";
 "not_completed_trackers" = "Не завершённые";
+"edit" = "Редактировать";
+"delete" = "Удалить";
+"confirm_tracker_deletion" = "Уверены, что хотите удалить трекер?";
+"edit_habit" = "Редактирование привычки";
+"save" = "Сохранить";
