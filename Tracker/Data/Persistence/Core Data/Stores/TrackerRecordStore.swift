@@ -84,6 +84,16 @@ final class TrackerRecordStore {
             return 0
         }
     }
+
+    func countAllRecords() -> Int {
+        let fetch = NSFetchRequest<TrackerRecordCoreData>(entityName: "TrackerRecordCoreData")
+        do {
+            return try context.count(for: fetch)
+        } catch {
+            return 0
+        }
+    }
+    
     
     // MARK: - Helpers
     

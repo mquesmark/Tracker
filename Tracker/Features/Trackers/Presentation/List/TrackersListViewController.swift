@@ -45,11 +45,11 @@ final class TrackersListViewController: UIViewController {
         return collection
     }()
     
-    private let datePicker: UIDatePicker = {
+    let datePicker: UIDatePicker = {
         let picker = UIDatePicker()
         picker.datePickerMode = .date
         picker.preferredDatePickerStyle = .compact
-        // Use a locale with dot-separated numeric date (shows like 05.11.2025)
+
         picker.locale = Locale(identifier: "de_DE")
         picker.translatesAutoresizingMaskIntoConstraints = false
         return picker
@@ -169,7 +169,7 @@ final class TrackersListViewController: UIViewController {
         traitRegistration = registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (vc: TrackersListViewController, _) in
             vc.themeDidChange()
         }
-    //    installBulkCreateButton()
+    installBulkCreateButton()
     }
     
     // MARK: - UI Setup

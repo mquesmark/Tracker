@@ -7,6 +7,7 @@ final class MainTabBarController: UITabBarController {
     }
 
     private func setupTabBar() {
+        view.backgroundColor = .whiteDay
         let trackersVC = TrackersListViewController()
         let trackersNavVC = UINavigationController(rootViewController: trackersVC)
         trackersNavVC.tabBarItem = UITabBarItem(
@@ -17,6 +18,7 @@ final class MainTabBarController: UITabBarController {
 
         let statisticsVC = StatisticsViewController()
         let statisticsNavVC = UINavigationController(rootViewController: statisticsVC)
+        statisticsNavVC.navigationBar.prefersLargeTitles = true
         statisticsNavVC.tabBarItem = UITabBarItem(
             title: NSLocalizedString("stats", comment: "Statistics tab bar item title"),
             image: UIImage(resource: .statistics),

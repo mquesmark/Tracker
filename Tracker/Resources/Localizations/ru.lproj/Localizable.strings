@@ -50,3 +50,7 @@
 "confirm_tracker_deletion" = "Уверены, что хотите удалить трекер?";
 "edit_habit" = "Редактирование привычки";
 "save" = "Сохранить";
+"best_period" = "Лучший период";
+"perfect_days" = "Идеальные дни";
+"trackers_completed" = "Трекеров завершено";
+"average_value" = "Среднее значение";

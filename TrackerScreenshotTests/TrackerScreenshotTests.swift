@@ -11,7 +11,27 @@ final class TrackerScreenshotTests: XCTestCase {
         let listVC = tab.viewControllers?.first as? TrackersListViewController
         listVC?.view.layoutIfNeeded()
         
-        assertSnapshot(of: tab, as: .image)
+        assertSnapshot(
+            of: tab,
+            as: .image(traits: UITraitCollection(userInterfaceStyle: .light)),
+            named: "light"
+        )
+    }
+    
+    func testTrackersListOnDarkTheme() {
+        let tab = MainTabBarController()
+        tab.overrideUserInterfaceStyle = .dark
+        tab.loadViewIfNeeded()
+        tab.viewControllers?[0].loadViewIfNeeded()
+        
+        let listVC = tab.viewControllers?.first as? TrackersListViewController
+        listVC?.view.layoutIfNeeded()
+
+        assertSnapshot(
+            of: tab,
+            as: .image(traits: UITraitCollection(userInterfaceStyle: .dark)),
+            named: "dark"
+        )
     }
     
 }

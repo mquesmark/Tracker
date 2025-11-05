@@ -1,74 +1,78 @@
 import UIKit
-import CoreData
 
-@MainActor
+// MARK: - Statistics Screen
 final class StatisticsViewController: UIViewController {
+
+    // MARK: UI
+    private let collectionView: UICollectionView = {
+        let layout = UICollectionViewFlowLayout()
+        layout.scrollDirection = .vertical
+        layout.minimumLineSpacing = 12
+        let cv = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        cv.translatesAutoresizingMaskIntoConstraints = false
+        cv.backgroundColor = .clear
+        return cv
+    }()
+
+    // MARK: Data
+    private struct StatItem {
+        let value: Int
+        let subtitle: String
+    }
+
+    private let recordStore = TrackerRecordStore.shared
     
+    private var items: [StatItem] = [
+        .init(value: 0, subtitle: NSLocalizedString("completed_trackers", comment: "Трекеров завершено")),
+    ]
+
+    // MARK: Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        let trashButton = UIButton(type: .system)
-        let trashImage = UIImage(
-            systemName: "trash.fill",
-            withConfiguration: UIImage.SymbolConfiguration(pointSize: 60, weight: .regular)
-        )
-        trashButton.setImage(trashImage, for: .normal)
-        trashButton.imageView?.contentMode = .scaleAspectFit
-        
-        trashButton.translatesAutoresizingMaskIntoConstraints = false
-        trashButton.addTarget(self, action: #selector(trashButtonTapped), for: .touchUpInside)
-        trashButton.tintColor = .systemRed
-        view.addSubview(trashButton)
-        
+        title = NSLocalizedString("stats", comment: "Статистика")
+        navigationController?.navigationBar.prefersLargeTitles = true
+        navigationItem.largeTitleDisplayMode = .always
+        view.backgroundColor = .whiteDay
+        view.addSubview(collectionView)
         NSLayoutConstraint.activate([
-            trashButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            trashButton.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            trashButton.widthAnchor.constraint(equalToConstant: 80),
-            trashButton.heightAnchor.constraint(equalToConstant: 80)
+            collectionView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            collectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            collectionView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
         ])
+
+        collectionView.contentInset = UIEdgeInsets(top: 64, left: 0, bottom: 16, right: 0)
+
+        collectionView.delegate = self
+        collectionView.dataSource = self
+        collectionView.register(StatCell.self, forCellWithReuseIdentifier: StatCell.reuseID)
+        getValues()
     }
     
-    @objc private func trashButtonTapped() {
-        resetAppData()
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        getValues()
     }
     
-    private func resetAppData() {
-        // 1. Delete all Core Data
-        let persistentStoreCoordinator = DataBaseStore.shared.persistentContainer.persistentStoreCoordinator
-        let stores = persistentStoreCoordinator.persistentStores
-        
-        Task.detached {
-            for store in stores {
-                do {
-                    try persistentStoreCoordinator.destroyPersistentStore(at: store.url!, ofType: store.type, options: nil)
-                    try persistentStoreCoordinator.addPersistentStore(ofType: store.type, configurationName: nil, at: store.url, options: nil)
-                } catch {
-                }
-            }
-            
-            // 2. Clear UserDefaults
-            if let bundleID = Bundle.main.bundleIdentifier {
-                UserDefaults.standard.removePersistentDomain(forName: bundleID)
-                UserDefaults.standard.synchronize()
-            }
-            
-            // 3. Clear cache
-            URLCache.shared.removeAllCachedResponses()
-            
-            let fileManager = FileManager.default
-            if let cachesURL = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first {
-                do {
-                    let contents = try fileManager.contentsOfDirectory(at: cachesURL, includingPropertiesForKeys: nil, options: [])
-                    for file in contents {
-                        try fileManager.removeItem(at: file)
-                    }
-                } catch {
-                }
-            }
-            
-            DispatchQueue.main.async {
-                exit(0)
-            }
-        }
+    private func getValues() {
+        items[0] = .init(value: recordStore.countAllRecords(), subtitle: items[0].subtitle)
+        collectionView.reloadData()
+    }
+}
+
+extension StatisticsViewController: UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        items.count
+    }
+
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: StatCell.reuseID, for: indexPath) as! StatCell
+        let item = items[indexPath.row]
+        cell.configure(value: item.value, subtitle: item.subtitle)
+        return cell
+    }
+
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        return CGSize(width: collectionView.bounds.width, height: 90)
     }
 }
