@@ -24,5 +24,6 @@ final class MainTabBarController: UITabBarController {
         )
 
         viewControllers = [trackersNavVC, statisticsNavVC]
+        tabBar.unselectedItemTintColor = .ypGray
     }
 }

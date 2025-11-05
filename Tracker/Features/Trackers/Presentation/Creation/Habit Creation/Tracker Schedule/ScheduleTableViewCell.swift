@@ -25,6 +25,15 @@ final class ScheduleTableViewCell: UITableViewCell {
             blue: 231.0/255.0,
             alpha: 1.0
         )
+        switchView.tintColor = UIColor { trait in
+            if trait.userInterfaceStyle == .dark {
+                return UIColor(red: 230/255.0, green: 232/255.0, blue: 235/255.0, alpha: 1.0) // #E6E8EB
+            } else {
+                return .clear
+            }
+        }
+        switchView.backgroundColor = switchView.tintColor
+        switchView.layer.cornerRadius = switchView.bounds.height / 2
         switchView.translatesAutoresizingMaskIntoConstraints = false
         return switchView
     }()

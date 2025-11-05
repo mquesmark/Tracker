@@ -43,6 +43,7 @@ final class OnboardingPageViewController: UIPageViewController, UIPageViewContro
         button.addAction(UIAction { [weak self] _ in
             self?.buttonTapped()
         }, for: .touchUpInside)
+        overrideUserInterfaceStyle = .light // Экран в темной теме выглядит так же, как и в светлой
     }
     
     func pageViewController(_ pageViewController: UIPageViewController, viewControllerBefore viewController: UIViewController) -> UIViewController? {

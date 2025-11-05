@@ -39,7 +39,7 @@ final class TrackerCollectionViewCell: UICollectionViewCell {
         label.font = .systemFont(ofSize: 12, weight: .medium)
         label.numberOfLines = 2
         label.textAlignment = .left
-        label.textColor = .whiteDay
+        label.textColor = .white
         
         label.translatesAutoresizingMaskIntoConstraints = false
         return label

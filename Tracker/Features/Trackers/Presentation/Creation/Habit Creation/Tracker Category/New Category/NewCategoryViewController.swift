@@ -136,6 +136,15 @@ final class NewCategoryViewController: UIViewController {
         let isValid = (1...Constants.symbolsLimit).contains(symbols)
         button.isUserInteractionEnabled = isValid
         button.backgroundColor = isValid ? .blackDay : .ypGray
+
+        let titleColor = UIColor { trait in
+            if trait.userInterfaceStyle == .dark {
+                return isValid ? .whiteDay : .white
+            } else {
+                return .whiteDay
+            }
+        }
+        button.setTitleColor(titleColor, for: .normal)
     }
     
     

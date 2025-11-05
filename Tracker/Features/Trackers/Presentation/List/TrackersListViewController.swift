@@ -13,6 +13,7 @@ final class TrackersListViewController: UIViewController {
     
     private var recordStore: TrackerRecordStore = .shared
     private var suppressBatchUpdates = false
+    private var traitRegistration: UITraitChangeRegistration?
     
     private var isSearchOrFilterActive: Bool = false {
         didSet {
@@ -48,6 +49,8 @@ final class TrackersListViewController: UIViewController {
         let picker = UIDatePicker()
         picker.datePickerMode = .date
         picker.preferredDatePickerStyle = .compact
+        // Use a locale with dot-separated numeric date (shows like 05.11.2025)
+        picker.locale = Locale(identifier: "de_DE")
         picker.translatesAutoresizingMaskIntoConstraints = false
         return picker
     }()
@@ -64,7 +67,30 @@ final class TrackersListViewController: UIViewController {
     
     private let searchField: UISearchTextField = {
         let tf = UISearchTextField()
-        tf.placeholder = NSLocalizedString("search", comment: "Search placeholder text")
+        let placeholderText = NSLocalizedString("search", comment: "Search placeholder text")
+        tf.attributedPlaceholder = NSAttributedString(
+            string: placeholderText,
+            attributes: [
+                .foregroundColor: UIColor { trait in
+                    trait.userInterfaceStyle == .dark
+                    ? UIColor(red: 235/255.0, green: 235/255.0, blue: 245/255.0, alpha: 1.0)
+                    : .ypGray
+                }
+            ]
+        )
+
+        tf.tintColor = UIColor { trait in
+            trait.userInterfaceStyle == .dark
+            ? UIColor(red: 235/255.0, green: 235/255.0, blue: 245/255.0, alpha: 1.0)
+            : .ypGray
+        }
+        DispatchQueue.main.async {
+            (tf.leftView as? UIImageView)?.tintColor = UIColor { trait in
+                trait.userInterfaceStyle == .dark
+                ? UIColor(red: 235/255.0, green: 235/255.0, blue: 245/255.0, alpha: 1.0)
+                : .ypGray
+            }
+        }
         tf.font = .systemFont(ofSize: 17, weight: .regular)
         tf.background = nil
         tf.backgroundColor = .clear
@@ -138,11 +164,17 @@ final class TrackersListViewController: UIViewController {
         trackerStore.updateDate(datePicker.date)
         onboardingCheck()
         updateSearchOrFilterFlag()
+        applyDatePickerAppearance()
 
-        // installBulkCreateButton()
+        traitRegistration = registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (vc: TrackersListViewController, _) in
+            vc.themeDidChange()
+        }
+    //    installBulkCreateButton()
     }
     
     // MARK: - UI Setup
+
+
     private func setupUI() {
         if let tabBar = self.tabBarController?.tabBar {
             let appearance = UITabBarAppearance()
@@ -303,6 +335,22 @@ final class TrackersListViewController: UIViewController {
         }
     }
     
+    private func applyDatePickerAppearance() {
+        // When system theme is dark, force the picker to render in light style with white background
+        if traitCollection.userInterfaceStyle == .dark {
+            datePicker.overrideUserInterfaceStyle = .light
+            datePicker.backgroundColor = .white
+        } else {
+            // In light theme, use defaults
+            datePicker.overrideUserInterfaceStyle = .unspecified
+            datePicker.backgroundColor = .clear
+        }
+        
+        datePicker.layer.cornerRadius = 8
+        datePicker.layer.cornerCurve = .continuous
+        datePicker.clipsToBounds = true
+    }
+    
     // MARK: - User Actions Handlers
     
     private func setupHideKeyboard() {
@@ -356,6 +404,10 @@ final class TrackersListViewController: UIViewController {
         
     }
     
+    private func themeDidChange() {
+        applyDatePickerAppearance()
+    }
+
     // MARK: - Helper Methods
     
     private func filteredTrackers(for category: TrackerCategory) -> [Tracker] {

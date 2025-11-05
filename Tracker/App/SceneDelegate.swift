@@ -10,7 +10,6 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         
         window = UIWindow(windowScene: windowScene)
         guard let window else { return }
-        window.overrideUserInterfaceStyle = .light
         window.rootViewController = MainTabBarController()
         window.makeKeyAndVisible()
     }

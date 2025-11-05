@@ -584,6 +584,16 @@ final class HabitViewController: UIViewController {
     private func setPrimaryButtonEnabled(_ enabled: Bool) {
         primaryButton.isUserInteractionEnabled = enabled
         primaryButton.backgroundColor = enabled ? .blackDay : .ypGray
+
+
+        let titleColor = UIColor { trait in
+            if trait.userInterfaceStyle == .dark {
+                return enabled ? .whiteDay : .white
+            } else {
+                return .whiteDay
+            }
+        }
+        primaryButton.setTitleColor(titleColor, for: .normal)
     }
     
     private func showSymbolsLimitLabel() {
