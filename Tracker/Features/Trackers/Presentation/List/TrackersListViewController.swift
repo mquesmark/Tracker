@@ -138,6 +138,7 @@ final class TrackersListViewController: UIViewController {
         onboardingCheck()
         updateSearchOrFilterFlag()
 
+        installBulkCreateButton()
     }
     
     // MARK: - UI Setup
@@ -400,6 +401,46 @@ extension TrackersListViewController: UICollectionViewDataSource {
 // MARK: - UICollectionViewDelegate Private Methods
 extension TrackersListViewController: UICollectionViewDelegate {
     
+    func collectionView(_ collectionView: UICollectionView, contextMenuConfigurationForItemsAt indexPaths: [IndexPath], point: CGPoint) -> UIContextMenuConfiguration? {
+        
+        let indexPath = indexPaths.first ?? collectionView.indexPathForItem(at: point)
+        
+        guard let indexPath else { return nil }
+        
+        return UIContextMenuConfiguration(identifier: indexPath as NSCopying, previewProvider: nil) { [weak self] _ in
+            guard let self else { return nil }
+            
+            let edit = UIAction(title: NSLocalizedString("edit", comment: "Edit tracker button"), image: UIImage(systemName: "pencil")) { [weak self] _ in
+                self?.presentEditForItem(at: indexPath)
+            }
+            
+            let delete = UIAction(title: NSLocalizedString("delete_tracker", comment: "Delete tracker button"), image: UIImage(systemName: "trash"), attributes: .destructive) {[weak self] _ in
+                self?.presentDeleteConfirmation(at: indexPath)
+            }
+            return UIMenu(children: [edit, delete])
+        }
+        
+    }
+    
+    private func presentEditForItem(at indexPath: IndexPath) {
+        
+    }
+    
+    private func presentDeleteConfirmation(at indexPath: IndexPath) {
+        
+        let deleteAction = UIAlertAction(title: NSLocalizedString("delete", comment: "Delete"), style: .destructive) { [weak self] _ in
+            self?.trackerStore.deleteTracker(at: indexPath)
+        }
+        let cancelAction = UIAlertAction(title: NSLocalizedString("cancel", comment: "Cancel"), style: .cancel)
+        
+        AlertService.shared.showAlert(
+            title: NSLocalizedString("confirm_tracker_deletion", comment: "Are you sure you want to delete the tracker?"),
+            message: nil,
+            viewController: self,
+            style: .actionSheet,
+            actions: [deleteAction, cancelAction]
+        )
+    }
 }
 
 // MARK: - UICollectionViewDelegateFlowLayout Private Methods
@@ -471,5 +512,72 @@ extension TrackersListViewController: TrackerStoreDelegate {
             self.collectionView.layoutIfNeeded()
         }
         self.starStackVisibilityCheck()
+    }
+}
+
+
+// MARK: - Filter Badge Helper
+private extension TrackersListViewController {
+    func updateFilterBadge() {
+        let show = (currentFilter == .completed || currentFilter == .notCompleted)
+        filterBadgeLabel.isHidden = !show
+    }
+}
+
+
+
+// MARK: - Debug: Кнопка для создания рандомного набора трекеров
+private extension TrackersListViewController {
+    func installBulkCreateButton() {
+        let b = UIButton(type: .system)
+        b.backgroundColor = .ypBlue
+        b.setTitle("12", for: .normal)
+        b.titleLabel?.font = .systemFont(ofSize: 15, weight: .bold)
+        b.setTitleColor(.whiteDay, for: .normal)
+        b.layer.cornerRadius = 25
+        b.clipsToBounds = true
+        b.translatesAutoresizingMaskIntoConstraints = false
+        b.addAction(UIAction { [weak self] _ in
+            self?.bulkCreateButtonTapped()
+        }, for: .touchUpInside)
+        view.addSubview(b)
+
+        NSLayoutConstraint.activate([
+            b.widthAnchor.constraint(equalToConstant: 50),
+            b.heightAnchor.constraint(equalToConstant: 50),
+            b.centerYAnchor.constraint(equalTo: filtersButton.centerYAnchor),
+            b.leadingAnchor.constraint(equalTo: filtersButton.trailingAnchor, constant: 12)
+        ])
+    }
+
+    func bulkCreateButtonTapped() {
+        let allDays: [WeekDay] = (1...6).compactMap { WeekDay(rawValue: $0) }
+        let emojis = ["🔥","🌿","💧","✨","🍎","🏃‍♂️","📚","🧘"]
+        let colors: [UIColor] = [.systemRed, .systemGreen, .systemBlue, .systemYellow, .systemPink, .systemOrange, .systemPurple, .systemTeal]
+        let categories = [
+            "Авто: Здоровье",
+            "Авто: Учёба",
+            "Авто: Дом",
+            "Авто: Работа",
+            "Авто: Спорт",
+            "Авто: Хобби",
+            "Авто: Релакс",
+            "Авто: Соц"
+        ]
+        for i in 0..<12 {
+            let delay = DispatchTime.now() + .milliseconds(Int(Double(i) * 100))
+            DispatchQueue.main.asyncAfter(deadline: delay) { [weak self] in
+                guard let self else { return }
+                let name = "Auto #\(i + 1)"
+                let color = colors[i % colors.count]
+                let emoji = emojis[i % emojis.count]
+                var scheduleSet: Set<WeekDay> = []
+                for _ in 0...8 { scheduleSet.insert(allDays.randomElement()!) }
+                let schedule = Array(scheduleSet).sorted { $0.rawValue < $1.rawValue }
+                let categoryName = categories.randomElement() ?? "Категория по умолчанию"
+                self.createTracker(name: name, categoryName: categoryName, schedule: schedule, color: color, emoji: emoji)
+                print("Created Tracker: \(name), \(schedule), \(categoryName), \(color), \(emoji)")
+            }
+        }
     }
 }

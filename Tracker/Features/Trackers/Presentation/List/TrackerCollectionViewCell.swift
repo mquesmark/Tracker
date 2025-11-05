@@ -6,7 +6,7 @@ final class TrackerCollectionViewCell: UICollectionViewCell {
     var onPlusTap: (() -> Void)?
     private var plusAction: UIAction?
 
-    private let cardView: UIView = {
+     let cardView: UIView = {
         let view = UIView()
         view.layer.cornerRadius = 16
         view.clipsToBounds = true

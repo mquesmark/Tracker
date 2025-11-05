@@ -4,8 +4,8 @@ final class AlertService {
     static let shared = AlertService()
     private init() {}
     
-    func showAlert(title: String, message: String?, viewController: UIViewController, actions: [UIAlertAction]? = nil) {
-        let alertController = UIAlertController(title: title, message: message, preferredStyle: .alert)
+    func showAlert(title: String, message: String?, viewController: UIViewController, style: UIAlertController.Style = .alert, actions: [UIAlertAction]? = nil) {
+        let alertController = UIAlertController(title: title, message: message, preferredStyle: style)
         actions?.forEach() { action in
             alertController.addAction(action)
         }
@@ -16,4 +16,6 @@ final class AlertService {
         
         viewController.present(alertController, animated: true)
     }
+    
+    
 }

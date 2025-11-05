@@ -17,7 +17,7 @@ final class TrackerRecordStore {
     func addRecord(_ record: TrackerRecord) {
 
         let trackerFetch = NSFetchRequest<TrackerCoreData>(entityName: "TrackerCoreData")
-        trackerFetch.predicate = NSPredicate(format: "id == %@", record.trackerId as CVarArg)
+        trackerFetch.predicate = NSPredicate(format: "id == %@", record.trackerId as NSUUID)
         trackerFetch.fetchLimit = 1
         
         do {
@@ -44,7 +44,7 @@ final class TrackerRecordStore {
         let fetch = NSFetchRequest<TrackerRecordCoreData>(entityName: "TrackerRecordCoreData")
         fetch.predicate = NSPredicate(
             format: "tracker.id == %@ AND (dateLogged >= %@ AND dateLogged < %@)",
-            record.trackerId as CVarArg, start as CVarArg, end as CVarArg
+            record.trackerId as NSUUID, start as NSDate, end as NSDate
         )
         fetch.fetchLimit = 1
         
@@ -63,7 +63,7 @@ final class TrackerRecordStore {
         let fetch = NSFetchRequest<TrackerRecordCoreData>(entityName: "TrackerRecordCoreData")
         fetch.predicate = NSPredicate(
             format: "tracker.id == %@ AND (dateLogged >= %@ AND dateLogged < %@)",
-            trackerId as CVarArg, start as CVarArg, end as CVarArg
+            trackerId as NSUUID, start as NSDate, end as NSDate
         )
         
         do {
@@ -76,7 +76,7 @@ final class TrackerRecordStore {
     
     func countRecords(for trackerId: UUID) -> Int {
         let fetch = NSFetchRequest<TrackerRecordCoreData>(entityName: "TrackerRecordCoreData")
-        fetch.predicate = NSPredicate(format: "tracker.id == %@", trackerId as CVarArg)
+        fetch.predicate = NSPredicate(format: "tracker.id == %@", trackerId as NSUUID)
         do {
             let count = try context.count(for: fetch)
             return count

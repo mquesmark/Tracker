@@ -21,16 +21,18 @@ struct TrackerStoreUpdate {
 }
 
 final class TrackerStore: NSObject {
+    // MARK: - Singleton
     static let shared = TrackerStore()
     
-    private var allTrackers: [Tracker] = []
-    private var filteredTrackers: [Tracker] = []
+    // MARK: - Properties
     
+    // MARK: - Public API: Read / Counts
     var numberOfSections: Int {
         fetchedResultsController?.sections?.count ?? 0
     }
     
     
+    // MARK: - Internal State
     private var currentDate: Date = Date()
     private var currentSearchText: String? = nil
     private var currentFilter: TrackerFilter? = nil
@@ -46,6 +48,7 @@ final class TrackerStore: NSObject {
     var insertedSections: IndexSet?
     var deletedSections: IndexSet?
     
+    // MARK: - Lifecycle
     private override init() {
         context = DataBaseStore.shared.context
         super.init()
@@ -54,18 +57,38 @@ final class TrackerStore: NSObject {
         try? fetchedResultsController?.performFetch()
     }
     
+    private func setupFetchedResultsController(for date: Date) {
+        let request = TrackerCoreData.fetchRequest()
+        request.predicate = buildPredicate(for: date, searchText: currentSearchText)
+        
+        request.sortDescriptors = [
+            NSSortDescriptor(keyPath: \TrackerCoreData.category?.name, ascending: true),
+            NSSortDescriptor(keyPath: \TrackerCoreData.name, ascending: true)
+        ]
+        
+        let frc = NSFetchedResultsController(
+            fetchRequest: request,
+            managedObjectContext: context,
+            sectionNameKeyPath: "category.name",
+            cacheName: nil
+        )
+        frc.delegate = self
+        self.fetchedResultsController = frc
+    }
+    
     func numberOfItems(in section: Int) -> Int {
         fetchedResultsController?.sections?[section].numberOfObjects ?? 0
     }
-    
+
+    // MARK: - Public API: Accessors
     func tracker(at indexPath: IndexPath) -> TrackerCoreData {
         guard let frc = fetchedResultsController else {
-            assertionFailure("❌ FRC is nil in tracker(at:)")
-            return TrackerCoreData(context: context)
+            preconditionFailure("FetchedResultsController is not configured")
         }
         return frc.object(at: indexPath)
     }
     
+    // MARK: - Conversion Helpers
     func convertToTracker(_ trackerCD: TrackerCoreData) -> Tracker? {
         guard let id = trackerCD.id,
               let name = trackerCD.name,
@@ -95,11 +118,12 @@ final class TrackerStore: NSObject {
             schedule: schedule
         )
     }
+    // MARK: - Section Titles
     func titleForSection(_ section: Int) -> String {
         fetchedResultsController?.sections?[section].name ?? NSLocalizedString("default_category", comment: "Default category text")
     }
     
-    
+    // MARK: - Create / Add
     func addTracker(_ tracker: Tracker, toCategoryWithName categoryName: String)
     {
         let request: NSFetchRequest<TrackerCategoryCoreData> =
@@ -130,6 +154,7 @@ final class TrackerStore: NSObject {
         }
     }
     
+    // MARK: - Private Helpers (Predicates)
     private func buildPredicate(for date: Date, searchText text: String?) -> NSPredicate? {
         var predicates: [NSPredicate] = []
                 
@@ -179,25 +204,7 @@ final class TrackerStore: NSObject {
         }
     }
     
-    private func setupFetchedResultsController(for date: Date) {
-        let request = TrackerCoreData.fetchRequest()
-        request.predicate = buildPredicate(for: date, searchText: currentSearchText)
-        
-        request.sortDescriptors = [
-            NSSortDescriptor(keyPath: \TrackerCoreData.category?.name, ascending: true),
-            NSSortDescriptor(keyPath: \TrackerCoreData.name, ascending: true)
-        ]
-        
-        let frc = NSFetchedResultsController(
-            fetchRequest: request,
-            managedObjectContext: context,
-            sectionNameKeyPath: "category.name",
-            cacheName: nil
-        )
-        frc.delegate = self
-        self.fetchedResultsController = frc
-    }
-    
+    // MARK: - Query Updates (Date / Search / Filter)
     func updateDate(_ newDate: Date) {
         currentDate = newDate
         fetchedResultsController?.fetchRequest.predicate = buildPredicate(for: newDate, searchText: currentSearchText)
@@ -232,6 +239,7 @@ final class TrackerStore: NSObject {
 }
 
 extension TrackerStore: NSFetchedResultsControllerDelegate {
+    // MARK: - NSFetchedResultsControllerDelegate
     
     func controllerWillChangeContent(
         _ controller: NSFetchedResultsController<any NSFetchRequestResult>
@@ -303,7 +311,44 @@ extension TrackerStore: NSFetchedResultsControllerDelegate {
     
 }
 
+// MARK: - CRUD (Edit & Delete) Stubs
 extension TrackerStore {
+    /// Update/Edit an existing tracker. Implementation to be added.
+    func updateTracker(_ tracker: Tracker, inCategoryWithName categoryName: String) {
+        // TODO: Implement tracker editing (update name, emoji, color, schedule, category, etc.)
+    }
+
+    /// Delete an existing tracker. Implementation to be added.
+    func deleteTracker(at indexPath: IndexPath) {
+        let cd = tracker(at: indexPath)
+        guard let id = cd.id else { return }
+        let request: NSFetchRequest<TrackerCoreData> = TrackerCoreData.fetchRequest()
+        request.fetchLimit = 1
+        request.predicate = NSPredicate(format: "id == %@", id as NSUUID)
+        
+        do {
+            guard let cd = try context.fetch(request).first else { return }
+            
+            let recordsRequest: NSFetchRequest<TrackerRecordCoreData> = TrackerRecordCoreData.fetchRequest()
+            recordsRequest.predicate = NSPredicate(format: "tracker == %@", cd)
+            if let records = try? context.fetch(recordsRequest) {
+                records.forEach { context.delete($0)}
+            }
+            
+            context.delete(cd)
+            try context.save()
+            
+            try self.fetchedResultsController?.performFetch()
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                self.delegate?.storeDidReloadData(self)
+            }
+        } catch {}
+    }
+}
+
+extension TrackerStore {
+    // MARK: - Records (Toggle Completion)
     
     func toggleRecord(for tracker: Tracker, for date: Date) {
         
