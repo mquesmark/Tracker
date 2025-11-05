@@ -365,10 +365,15 @@ extension TrackerStore {
             trackerCD.category = categoryCD
 
             try context.save()
-            // FRC delegate will update UI; do not force refetch or reload
-        } catch {
-            // You may want to log the error in debug builds
-        }
+
+            do {
+                try self.fetchedResultsController?.performFetch()
+                DispatchQueue.main.async { [weak self] in
+                    guard let self else { return }
+                    self.delegate?.storeDidReloadData(self)
+                }
+            } catch { }
+        } catch { }
     }
 
     /// Delete an existing tracker. Implementation to be added.
