@@ -19,7 +19,7 @@ final class TrackersListViewController: UIViewController {
             starStackVisibilityCheck()
         }
     }
-
+    
     private func updateSearchOrFilterFlag() {
         let hasSearch = !(searchField.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         let cal = Calendar.current
@@ -139,7 +139,7 @@ final class TrackersListViewController: UIViewController {
         onboardingCheck()
         updateSearchOrFilterFlag()
 
-        installBulkCreateButton()
+        // installBulkCreateButton()
     }
     
     // MARK: - UI Setup
