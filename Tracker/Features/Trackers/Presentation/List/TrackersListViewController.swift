@@ -169,7 +169,7 @@ final class TrackersListViewController: UIViewController {
         traitRegistration = registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (vc: TrackersListViewController, _) in
             vc.themeDidChange()
         }
-    installBulkCreateButton()
+   // installBulkCreateButton()
     }
     
     // MARK: - UI Setup

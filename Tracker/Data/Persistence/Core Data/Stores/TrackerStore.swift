@@ -30,6 +30,11 @@ final class TrackerStore: NSObject {
     var numberOfSections: Int {
         fetchedResultsController?.sections?.count ?? 0
     }
+
+    func countTrackers() -> Int {
+        let req: NSFetchRequest<TrackerCoreData> = TrackerCoreData.fetchRequest()
+        return (try? context.count(for: req)) ?? 0
+    }
     
     
     // MARK: - Internal State
@@ -221,9 +226,7 @@ final class TrackerStore: NSObject {
         currentDate = newDate
         fetchedResultsController?.fetchRequest.predicate = buildPredicate(for: newDate, searchText: currentSearchText)
         try? fetchedResultsController?.performFetch()
-#if DEBUG
-        self.debugLogSections("after updateDate")
-#endif
+
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             self.delegate?.storeDidReloadData(self)
@@ -234,9 +237,7 @@ final class TrackerStore: NSObject {
         currentSearchText = text
         fetchedResultsController?.fetchRequest.predicate = buildPredicate(for: currentDate, searchText: currentSearchText)
         try? fetchedResultsController?.performFetch()
-#if DEBUG
-        self.debugLogSections("after updateSearchText")
-#endif
+
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             self.delegate?.storeDidReloadData(self)
@@ -247,9 +248,7 @@ final class TrackerStore: NSObject {
         currentFilter = filter
         fetchedResultsController?.fetchRequest.predicate = buildPredicate(for: currentDate, searchText: currentSearchText)
         try? fetchedResultsController?.performFetch()
-#if DEBUG
-        self.debugLogSections("after updateFilter")
-#endif
+
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             self.delegate?.storeDidReloadData(self)
@@ -333,7 +332,6 @@ extension TrackerStore: NSFetchedResultsControllerDelegate {
 // MARK: - CRUD (Edit & Delete) Stubs
 extension TrackerStore {
 
-    /// Updates an existing tracker by id and fields. Creates the category if it doesn't exist.
     func updateTracker(id: UUID,
                        name: String,
                        categoryName: String,
@@ -347,13 +345,11 @@ extension TrackerStore {
         do {
             guard let trackerCD = try context.fetch(request).first else { return }
 
-            // Update primitive fields
             trackerCD.name = name
             trackerCD.emoji = emoji
             trackerCD.color = color
             trackerCD.schedule = schedule as NSArray
 
-            // Ensure category exists (or create) and assign
             let catRequest: NSFetchRequest<TrackerCategoryCoreData> = TrackerCategoryCoreData.fetchRequest()
             catRequest.fetchLimit = 1
             catRequest.predicate = NSPredicate(format: "name == %@", categoryName)
@@ -376,7 +372,6 @@ extension TrackerStore {
         } catch { }
     }
 
-    /// Delete an existing tracker. Implementation to be added.
     func deleteTracker(at indexPath: IndexPath) {
         let cd = tracker(at: indexPath)
         guard let id = cd.id else { return }
@@ -395,7 +390,6 @@ extension TrackerStore {
             
             context.delete(cd)
             try context.save()
-            // FRC delegate will update UI; do not force refetch or reload
         } catch {}
     }
 }
@@ -413,7 +407,6 @@ extension TrackerStore {
             rs.addRecord(record)
             print("✅ Added record for", tracker.name)
         }
-        // Rebuild predicate because Completed/NotCompleted filters depend on records
         fetchedResultsController?.fetchRequest.predicate = buildPredicate(for: currentDate, searchText: currentSearchText)
         do {
             try fetchedResultsController?.performFetch()
@@ -426,18 +419,3 @@ extension TrackerStore {
         }
     }
 }
-
-
-#if DEBUG
-extension TrackerStore {
-    fileprivate func debugLogSections(_ note: String) {
-        if let secs = fetchedResultsController?.sections {
-            let parts = secs.enumerated().map { "\($0.offset): \($0.element.name) [\($0.element.numberOfObjects)]" }.joined(separator: ", ")
-            print("📦 FRC \(note) — sections=\(secs.count) { \(parts) }")
-        } else {
-            print("📦 FRC \(note) — sections=nil")
-        }
-    }
-}
-#endif
-

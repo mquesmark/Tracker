@@ -50,3 +50,8 @@
 "confirm_tracker_deletion" = "Are you sure you want to delete the tracker?";
 "edit_habit" = "Edit Habit";
 "save" = "Save";
+"best_period" = "Best period";
+"perfect_days" = "Perfect days";
+"trackers_completed" = "Completed trackers";
+"average_value" = "Average value";
+"empty_statistics" = "Nothing to analyze yet";
