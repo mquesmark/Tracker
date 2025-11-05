@@ -499,29 +499,8 @@ extension TrackersListViewController: TrackerStoreDelegate {
             collectionView.reloadData()
             collectionView.layoutIfNeeded()
         }
-//        collectionView.performBatchUpdates {
-//            if !update.deletedSections.isEmpty {
-//                collectionView.deleteSections(update.deletedSections)
-//            }
-//            if !update.insertedSections.isEmpty {
-//                collectionView.insertSections(update.insertedSections)
-//            }
-//            
-//            if !update.inserted.isEmpty {
-//                collectionView.insertItems(at: update.inserted)
-//            }
-//            if !update.deleted.isEmpty {
-//                collectionView.deleteItems(at: update.deleted)
-//            }
-//            if !update.updated.isEmpty {
-//                collectionView.reloadItems(at: update.updated)
-//            }
-//            for move in update.moved {
-//                collectionView.moveItem(at: move.from, to: move.to)
-//            }
-//        } completion: { _ in
-            self.starStackVisibilityCheck()
-//        }
+        self.starStackVisibilityCheck()
+        
     }
 
     func storeDidReloadData(_ store: TrackerStore) {

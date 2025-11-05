@@ -154,9 +154,18 @@ final class TrackerStore: NSObject {
         trackerCD.category = category
         
         try? context.save()
-        // No forced refetch or delegate reload; FRC delegate will handle UI update
+        
+        do {
+            try self.fetchedResultsController?.performFetch()
+            
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                self.delegate?.storeDidReloadData(self)
+            }
+            
+            } catch {}
     }
-    
+
     // MARK: - Private Helpers (Predicates)
     private func buildPredicate(for date: Date, searchText text: String?) -> NSPredicate? {
         var predicates: [NSPredicate] = []
