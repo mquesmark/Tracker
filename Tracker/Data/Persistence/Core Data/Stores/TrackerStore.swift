@@ -132,12 +132,10 @@ final class TrackerStore: NSObject {
     
     private func buildPredicate(for date: Date, searchText text: String?) -> NSPredicate? {
         var predicates: [NSPredicate] = []
-        
-        let effectiveDate: Date = (currentFilter == .today) ? Date() : date
-        
+                
         var calendar = Calendar.current
         calendar.firstWeekday = 2
-        let weekdayNumber = calendar.component(.weekday, from: effectiveDate)
+        let weekdayNumber = calendar.component(.weekday, from: date)
         let adjusted = weekdayNumber == 1 ? 7 : weekdayNumber - 1
 
         if let weekday = WeekDay(rawValue: adjusted) {
@@ -149,8 +147,9 @@ final class TrackerStore: NSObject {
             let namePredicate = NSPredicate(format: "name CONTAINS[cd] %@", text)
             predicates.append(namePredicate)
         }
+        
         if currentFilter == .completed || currentFilter == .notCompleted {
-            let ids = completedTrackerIDs(on: effectiveDate)
+            let ids = completedTrackerIDs(on: date)
             if currentFilter == .completed {
                 predicates.append(NSPredicate(format: "id IN %@", ids as [UUID]))
             } else if currentFilter == .notCompleted {

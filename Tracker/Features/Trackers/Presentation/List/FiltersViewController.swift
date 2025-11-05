@@ -35,10 +35,12 @@ final class FiltersViewController: UIViewController {
     
     init(selectedFilter: TrackerFilter? = .all, onFilterPicked: ((TrackerFilter) -> Void)? = nil) {
         self.onFilterPicked = onFilterPicked
-        if let selectedFilter, let idx = availableFilters.firstIndex(of: selectedFilter) {
+        if let selectedFilter,
+           (selectedFilter == .completed || selectedFilter == .notCompleted),
+           let idx = availableFilters.firstIndex(of: selectedFilter) {
             self.selectedIndex = idx
         } else {
-            self.selectedIndex = availableFilters.firstIndex(of: .all)
+            self.selectedIndex = nil
         }
         super.init(nibName: nil, bundle: nil)
     }
@@ -90,25 +92,26 @@ final class FiltersViewController: UIViewController {
             tableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
         ])
     }
-    
 }
 
 extension FiltersViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
 
-        if let selectedIndex, selectedIndex == indexPath.row {
-            self.selectedIndex = nil
+        let picked = availableFilters[indexPath.row]
+        
+        switch picked {
+        case .all, .today:
+            selectedIndex = nil
             tableView.reloadData()
-            onFilterPicked?(.all)
+            onFilterPicked?(picked)
             dismiss(animated: true)
-            return
+        case .completed, .notCompleted:
+            selectedIndex = indexPath.row
+            tableView.reloadData()
+            onFilterPicked?(picked)
+            dismiss(animated: true)
         }
-
-        selectedIndex = indexPath.row
-        tableView.reloadData()
-        onFilterPicked?(availableFilters[indexPath.row])
-        dismiss(animated: true)
     }
 }
 

@@ -25,12 +25,13 @@ final class TrackersListViewController: UIViewController {
         let today = cal.startOfDay(for: Date())
         let selected = cal.startOfDay(for: datePicker.date)
         let isOtherDate = (selected != today)
-        self.isSearchOrFilterActive = hasSearch || isOtherDate || currentFilter == .today || currentFilter == .completed || currentFilter == .notCompleted
+        self.isSearchOrFilterActive = hasSearch || isOtherDate || currentFilter == .completed || currentFilter == .notCompleted
     }
     
     private var currentDate: Date = Date()
-    private var currentFilter: TrackerFilter? = nil
-    private var lastNonTodayDate: Date?
+    private var currentFilter: TrackerFilter? = nil {
+        didSet { updateFilterBadge() }
+    }
     
     private let collectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
@@ -106,6 +107,21 @@ final class TrackersListViewController: UIViewController {
         b.translatesAutoresizingMaskIntoConstraints = false
         return b
     }()
+
+    private let filterBadgeLabel: UILabel = {
+        let l = UILabel()
+        l.text = "1"
+        l.font = .systemFont(ofSize: 12, weight: .bold)
+        l.textColor = .white
+        l.backgroundColor = .systemRed
+        l.textAlignment = .center
+        l.clipsToBounds = true
+        l.layer.cornerRadius = 10
+        l.isHidden = true
+        l.translatesAutoresizingMaskIntoConstraints = false
+        return l
+    }()
+
     
     // MARK: - Lifecycle
     
@@ -120,8 +136,8 @@ final class TrackersListViewController: UIViewController {
         trackerStore.delegate = self
         trackerStore.updateDate(datePicker.date)
         onboardingCheck()
-        applyDatePickerInteractivity(for: currentFilter)
         updateSearchOrFilterFlag()
+
     }
     
     // MARK: - UI Setup
@@ -179,6 +195,13 @@ final class TrackersListViewController: UIViewController {
         view.addSubview(collectionView)
         
         view.addSubview(filtersButton)
+        view.addSubview(filterBadgeLabel)
+        NSLayoutConstraint.activate([
+            filterBadgeLabel.heightAnchor.constraint(equalToConstant: 20),
+            filterBadgeLabel.widthAnchor.constraint(greaterThanOrEqualToConstant: 20),
+            filterBadgeLabel.centerXAnchor.constraint(equalTo: filtersButton.trailingAnchor, constant: -4),
+            filterBadgeLabel.centerYAnchor.constraint(equalTo: filtersButton.topAnchor, constant: 4)
+        ])
     }
     
     private func setupConstraints() {
@@ -230,44 +253,42 @@ final class TrackersListViewController: UIViewController {
         ])
     }
     
+    
     private func setupCollection() {
         collectionView.delegate = self
         collectionView.dataSource = self
+        collectionView.alwaysBounceVertical = true
         collectionView.register(TrackerCollectionViewCell.self, forCellWithReuseIdentifier: "TrackerCollectionViewCell")
         collectionView.register(TrackerCategoryHeader.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: "TrackerCategoryHeader")
+        collectionView.bounces = true
+        collectionView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 120, right: 0)
+        collectionView.verticalScrollIndicatorInsets = UIEdgeInsets(top: 0, left: 0, bottom: 120, right: 0)
     }
     
     private func starStackVisibilityCheck() {
-        
-        if isSearchOrFilterActive {
+        let sections = collectionView.numberOfSections
+        var totalItems = 0
+        if sections > 0 {
+            for s in 0..<sections { totalItems += collectionView.numberOfItems(inSection: s) }
+        }
+        let isEmpty = (sections == 0) || (totalItems == 0)
+
+        let hasSearch = !(searchField.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let hasStatusFilter = (currentFilter == .completed || currentFilter == .notCompleted)
+
+
+        if hasSearch || hasStatusFilter {
             starImageView.image = UIImage(resource: .thinking)
             starTextLabel.text = NSLocalizedString("nothing_found", comment: "Text appears when nothing is found while searching or filtering")
         } else {
             starImageView.image = UIImage(resource: .star)
             starTextLabel.text = NSLocalizedString("star_text_label", comment: "Star text label")
         }
-        
-        let sections = collectionView.numberOfSections
-        guard sections > 0 else {
-            starStackView.isHidden = false
-            collectionView.isHidden = true
-            return
-        }
 
-        var totalItems = 0
-        for section in 0..<sections {
-            totalItems += collectionView.numberOfItems(inSection: section)
-        }
+        starStackView.isHidden = !isEmpty
+        collectionView.isHidden = isEmpty
 
-        if totalItems == 0 {
-            starStackView.isHidden = false
-            collectionView.isHidden = true
-        } else {
-            starStackView.isHidden = true
-            collectionView.isHidden = false
-        }
-        
-
+        filtersButton.isHidden = (!hasSearch && !hasStatusFilter && isEmpty)
     }
     
     private func onboardingCheck() {
@@ -287,12 +308,6 @@ final class TrackersListViewController: UIViewController {
         tapGesture.cancelsTouchesInView = false
         view.addGestureRecognizer(tapGesture)
     }
-
-    private func applyDatePickerInteractivity(for filter: TrackerFilter?) {
-        let enabled = (filter != .today)
-        datePicker.isEnabled = enabled
-        datePicker.alpha = enabled ? 1.0 : 0.5
-    }
     
     @objc private func dismissKeyboard() {
         view.endEditing(true)
@@ -308,6 +323,7 @@ final class TrackersListViewController: UIViewController {
     private func searchChanged() {
         trackerStore.updateSearchText(searchField.text)
         updateSearchOrFilterFlag()
+        updateFilterBadge()
     }
     
     private func filtersButtonTapped() {
@@ -316,25 +332,22 @@ final class TrackersListViewController: UIViewController {
         
         vc.onFilterPicked = { [weak self] filter in
             guard let self else { return }
-
-            let previousFilter = self.currentFilter
-            if filter == .today {
-
-                self.lastNonTodayDate = self.datePicker.date
-                let todayDate = Date()
-                self.datePicker.date = todayDate
-                self.currentDate = todayDate
-                self.trackerStore.updateDate(todayDate)
-            } else if previousFilter == .today, let restore = self.lastNonTodayDate {
-
-                self.datePicker.date = restore
-                self.currentDate = restore
-                self.trackerStore.updateDate(restore)
+            
+            switch filter {
+            case .today:
+                let today = Date()
+                self.datePicker.date = today
+                self.currentDate = today
+                self.trackerStore.updateDate(today)
+                self.currentFilter = nil
+                self.trackerStore.updateFilter(nil)
+            case .all:
+                self.currentFilter = nil
+                self.trackerStore.updateFilter(nil)
+            case .completed, .notCompleted:
+                self.currentFilter = filter
+                self.trackerStore.updateFilter(filter)
             }
-
-            self.currentFilter = filter
-            self.trackerStore.updateFilter(filter)
-            self.applyDatePickerInteractivity(for: filter)
             self.updateSearchOrFilterFlag()
         }
         present(vc, animated: true)
