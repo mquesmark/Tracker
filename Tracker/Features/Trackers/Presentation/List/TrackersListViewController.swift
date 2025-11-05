@@ -12,6 +12,7 @@ final class TrackersListViewController: UIViewController {
     private lazy var trackerStore: TrackerStore = .shared
     
     private var recordStore: TrackerRecordStore = .shared
+    private var suppressBatchUpdates = false
     
     private var isSearchOrFilterActive: Bool = false {
         didSet {
@@ -493,37 +494,46 @@ extension TrackersListViewController: HabitViewControllerDelegate {
 
 extension TrackersListViewController: TrackerStoreDelegate {
     func store(_ store: TrackerStore, didUpdate update: TrackerStoreUpdate) {
-        collectionView.performBatchUpdates {
-            if !update.deletedSections.isEmpty {
-                collectionView.deleteSections(update.deletedSections)
-            }
-            if !update.insertedSections.isEmpty {
-                collectionView.insertSections(update.insertedSections)
-            }
-            
-            if !update.inserted.isEmpty {
-                collectionView.insertItems(at: update.inserted)
-            }
-            if !update.deleted.isEmpty {
-                collectionView.deleteItems(at: update.deleted)
-            }
-            if !update.updated.isEmpty {
-                collectionView.reloadItems(at: update.updated)
-            }
-            for move in update.moved {
-                collectionView.moveItem(at: move.from, to: move.to)
-            }
-        } completion: { _ in
-            self.starStackVisibilityCheck()
+        if suppressBatchUpdates { return }
+        UIView.performWithoutAnimation {
+            collectionView.reloadData()
+            collectionView.layoutIfNeeded()
         }
+//        collectionView.performBatchUpdates {
+//            if !update.deletedSections.isEmpty {
+//                collectionView.deleteSections(update.deletedSections)
+//            }
+//            if !update.insertedSections.isEmpty {
+//                collectionView.insertSections(update.insertedSections)
+//            }
+//            
+//            if !update.inserted.isEmpty {
+//                collectionView.insertItems(at: update.inserted)
+//            }
+//            if !update.deleted.isEmpty {
+//                collectionView.deleteItems(at: update.deleted)
+//            }
+//            if !update.updated.isEmpty {
+//                collectionView.reloadItems(at: update.updated)
+//            }
+//            for move in update.moved {
+//                collectionView.moveItem(at: move.from, to: move.to)
+//            }
+//        } completion: { _ in
+            self.starStackVisibilityCheck()
+//        }
     }
 
     func storeDidReloadData(_ store: TrackerStore) {
         UIView.performWithoutAnimation {
+            self.suppressBatchUpdates = true
             self.collectionView.reloadData()
             self.collectionView.layoutIfNeeded()
         }
         self.starStackVisibilityCheck()
+        DispatchQueue.main.async { [weak self] in
+            self?.suppressBatchUpdates = false
+        }
     }
 }
 

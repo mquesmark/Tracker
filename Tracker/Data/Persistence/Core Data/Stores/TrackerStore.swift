@@ -77,7 +77,9 @@ final class TrackerStore: NSObject {
     }
     
     func numberOfItems(in section: Int) -> Int {
-        fetchedResultsController?.sections?[section].numberOfObjects ?? 0
+        guard let sections = fetchedResultsController?.sections,
+              section >= 0, section < sections.count else { return 0 }
+        return sections[section].numberOfObjects
     }
 
     // MARK: - Public API: Accessors
@@ -152,12 +154,7 @@ final class TrackerStore: NSObject {
         trackerCD.category = category
         
         try? context.save()
-        
-        do {
-            try self.fetchedResultsController?.performFetch()
-            self.delegate?.storeDidReloadData(self)
-        } catch {
-        }
+        // No forced refetch or delegate reload; FRC delegate will handle UI update
     }
     
     // MARK: - Private Helpers (Predicates)
@@ -214,8 +211,10 @@ final class TrackerStore: NSObject {
     func updateDate(_ newDate: Date) {
         currentDate = newDate
         fetchedResultsController?.fetchRequest.predicate = buildPredicate(for: newDate, searchText: currentSearchText)
-        
         try? fetchedResultsController?.performFetch()
+#if DEBUG
+        self.debugLogSections("after updateDate")
+#endif
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             self.delegate?.storeDidReloadData(self)
@@ -226,17 +225,22 @@ final class TrackerStore: NSObject {
         currentSearchText = text
         fetchedResultsController?.fetchRequest.predicate = buildPredicate(for: currentDate, searchText: currentSearchText)
         try? fetchedResultsController?.performFetch()
+#if DEBUG
+        self.debugLogSections("after updateSearchText")
+#endif
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             self.delegate?.storeDidReloadData(self)
         }
     }
-    
+
     func updateFilter(_ filter: TrackerFilter?) {
         currentFilter = filter
-        
         fetchedResultsController?.fetchRequest.predicate = buildPredicate(for: currentDate, searchText: currentSearchText)
         try? fetchedResultsController?.performFetch()
+#if DEBUG
+        self.debugLogSections("after updateFilter")
+#endif
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             self.delegate?.storeDidReloadData(self)
@@ -352,11 +356,7 @@ extension TrackerStore {
             trackerCD.category = categoryCD
 
             try context.save()
-            try self.fetchedResultsController?.performFetch()
-            DispatchQueue.main.async { [weak self] in
-                guard let self else { return }
-                self.delegate?.storeDidReloadData(self)
-            }
+            // FRC delegate will update UI; do not force refetch or reload
         } catch {
             // You may want to log the error in debug builds
         }
@@ -381,12 +381,7 @@ extension TrackerStore {
             
             context.delete(cd)
             try context.save()
-            
-            try self.fetchedResultsController?.performFetch()
-            DispatchQueue.main.async { [weak self] in
-                guard let self else { return }
-                self.delegate?.storeDidReloadData(self)
-            }
+            // FRC delegate will update UI; do not force refetch or reload
         } catch {}
     }
 }
@@ -395,23 +390,40 @@ extension TrackerStore {
     // MARK: - Records (Toggle Completion)
     
     func toggleRecord(for tracker: Tracker, for date: Date) {
-        
         let rs = TrackerRecordStore.shared
         let record = TrackerRecord(trackerId: tracker.id, dateLogged: date)
         if rs.isCompleted(trackerId: tracker.id, date: date) {
             rs.removeRecord(record)
+            print("✅ Removed record for", tracker.name)
         } else {
             rs.addRecord(record)
+            print("✅ Added record for", tracker.name)
         }
-        context.refreshAllObjects()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) { [weak self] in
-            guard let self else { return }
-            do {
-                try self.fetchedResultsController?.performFetch()
+        // Rebuild predicate because Completed/NotCompleted filters depend on records
+        fetchedResultsController?.fetchRequest.predicate = buildPredicate(for: currentDate, searchText: currentSearchText)
+        do {
+            try fetchedResultsController?.performFetch()
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
                 self.delegate?.storeDidReloadData(self)
-            } catch {
             }
+        } catch {
+            print("❌ performFetch after toggleRecord failed:", error)
         }
-        
     }
 }
+
+
+#if DEBUG
+extension TrackerStore {
+    fileprivate func debugLogSections(_ note: String) {
+        if let secs = fetchedResultsController?.sections {
+            let parts = secs.enumerated().map { "\($0.offset): \($0.element.name) [\($0.element.numberOfObjects)]" }.joined(separator: ", ")
+            print("📦 FRC \(note) — sections=\(secs.count) { \(parts) }")
+        } else {
+            print("📦 FRC \(note) — sections=nil")
+        }
+    }
+}
+#endif
+
