@@ -14,7 +14,6 @@
 "weekday_saturday_short" = "Sat";
 "weekday_sunday_short" = "Sun";
 
-
 "new_category" = "New Category";
 "category_name_placeholder" = "Enter category name";
 "symbols_limit" = "Limit: %d characters";
@@ -46,3 +45,8 @@
 "today_trackers" = "Today's trackers";
 "completed_trackers" = "Completed";
 "not_completed_trackers" = "Not completed";
+"edit" = "Edit";
+"delete" = "Delete";
+"confirm_tracker_deletion" = "Are you sure you want to delete the tracker?";
+"edit_habit" = "Edit Habit";
+"save" = "Save";
