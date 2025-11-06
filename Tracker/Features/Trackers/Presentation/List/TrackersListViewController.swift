@@ -1,5 +1,4 @@
 import UIKit
-import AppMetricaCore
 
 final class TrackersListViewController: UIViewController {
         
@@ -223,17 +222,7 @@ final class TrackersListViewController: UIViewController {
     // MARK: - UI Setup
 
     private func reportUIEvent(event: String, item: String? = nil) {
-        var params: [String: String] = [
-            "event": event,
-            "screen": "Main"
-        ]
-        if let item = item { params["item"] = item }
-        let message = "ui_event"
-        print("METRICA SEND -> \(message) params: \(params)")
-        AppMetrica.reportEvent(name: message, parameters: params, onFailure: { (error) in
-            print("DID FAIL REPORT EVENT: \(message)")
-            print("REPORT ERROR: \(error.localizedDescription)")
-        })
+        AnalyticsService.shared.reportUIEvent(screen: "Main", event: event, item: item)
     }
 
 
