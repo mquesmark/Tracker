@@ -1,4 +1,5 @@
 import UIKit
+import AppMetricaCore
 
 final class TrackersListViewController: UIViewController {
         
@@ -199,6 +200,16 @@ final class TrackersListViewController: UIViewController {
         }
    // installBulkCreateButton()
     }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        reportUIEvent(event: "open")
+    }
+
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        reportUIEvent(event: "close")
+    }
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         let fitted = datePicker.sizeThatFits(.zero)
@@ -210,6 +221,20 @@ final class TrackersListViewController: UIViewController {
         }
     }
     // MARK: - UI Setup
+
+    private func reportUIEvent(event: String, item: String? = nil) {
+        var params: [String: String] = [
+            "event": event,
+            "screen": "Main"
+        ]
+        if let item = item { params["item"] = item }
+        let message = "ui_event"
+        print("METRICA SEND -> \(message) params: \(params)")
+        AppMetrica.reportEvent(name: message, parameters: params, onFailure: { (error) in
+            print("DID FAIL REPORT EVENT: \(message)")
+            print("REPORT ERROR: \(error.localizedDescription)")
+        })
+    }
 
 
     private func setupUI() {
@@ -400,6 +425,7 @@ final class TrackersListViewController: UIViewController {
     }
     
     @objc private func addTrackerButtonTapped() {
+        reportUIEvent(event: "click", item: "add_track")
         let vc = HabitViewController(mode: .create)
         vc.modalPresentationStyle = .pageSheet
         vc.delegate = self
@@ -413,6 +439,7 @@ final class TrackersListViewController: UIViewController {
     }
     
     private func filtersButtonTapped() {
+        reportUIEvent(event: "click", item: "filter")
         let vc = FiltersViewController(selectedFilter: currentFilter)
         vc.modalPresentationStyle = .pageSheet
         
@@ -475,6 +502,7 @@ extension TrackersListViewController: UICollectionViewDataSource {
         cell.configure(withTracker: tracker, isCompleted: isCompleted, daysCompleted: timesCompleted)
         
         cell.onPlusTap = { [weak self] in
+            self?.reportUIEvent(event: "click", item: "track")
             guard let self else { return }
             guard self.datePicker.date <= Date() else {
                 AlertService.shared.showAlert(title: NSLocalizedString("error", comment: "Error alert title"), message: NSLocalizedString("cant_do_tracker_in_future", comment: "Error alert message when trying to track in future day"), viewController: self, actions: [UIAlertAction(title: NSLocalizedString("sad_ok", comment: "button that dismisses an alert with sad text"), style: .default)])
@@ -500,10 +528,12 @@ extension TrackersListViewController: UICollectionViewDelegate {
             guard let self else { return nil }
             
             let edit = UIAction(title: NSLocalizedString("edit", comment: "Edit tracker button")) { [weak self] _ in
+                self?.reportUIEvent(event: "click", item: "edit")
                 self?.presentEditForItem(at: indexPath)
             }
-            
-            let delete = UIAction(title: NSLocalizedString("delete", comment: "Delete tracker button"), attributes: .destructive) {[weak self] _ in
+
+            let delete = UIAction(title: NSLocalizedString("delete", comment: "Delete tracker button"), attributes: .destructive) { [weak self] _ in
+                self?.reportUIEvent(event: "click", item: "delete")
                 self?.presentDeleteConfirmation(at: indexPath)
             }
             return UIMenu(children: [edit, delete])
