@@ -14,12 +14,40 @@ final class TrackersListViewController: UIViewController {
     private var recordStore: TrackerRecordStore = .shared
     private var suppressBatchUpdates = false
     private var traitRegistration: UITraitChangeRegistration?
+    private var dateBarWidthConstraint: NSLayoutConstraint?
+    private var dateBarHeightConstraint: NSLayoutConstraint?
     
     private var isSearchOrFilterActive: Bool = false {
         didSet {
             starStackVisibilityCheck()
         }
     }
+    
+    private lazy var dateBarContainer: UIView = {
+        let v = UIView()
+        v.translatesAutoresizingMaskIntoConstraints = false
+        v.addSubview(datePicker)
+        NSLayoutConstraint.activate([
+            datePicker.leadingAnchor.constraint(equalTo: v.leadingAnchor),
+            datePicker.trailingAnchor.constraint(equalTo: v.trailingAnchor),
+            datePicker.topAnchor.constraint(equalTo: v.topAnchor),
+            datePicker.bottomAnchor.constraint(equalTo: v.bottomAnchor)
+        ])
+        // Size the container to exactly match the datePicker's natural size
+        datePicker.setContentHuggingPriority(.required, for: .horizontal)
+        datePicker.setContentCompressionResistancePriority(.required, for: .horizontal)
+        v.setContentHuggingPriority(.required, for: .horizontal)
+        v.setContentCompressionResistancePriority(.required, for: .horizontal)
+
+        let fitted = datePicker.sizeThatFits(.zero)
+        let w = v.widthAnchor.constraint(equalToConstant: fitted.width)
+        let h = v.heightAnchor.constraint(equalToConstant: fitted.height)
+        w.isActive = true
+        h.isActive = true
+        self.dateBarWidthConstraint = w
+        self.dateBarHeightConstraint = h
+        return v
+    }()
     
     private func updateSearchOrFilterFlag() {
         let hasSearch = !(searchField.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -171,7 +199,16 @@ final class TrackersListViewController: UIViewController {
         }
    // installBulkCreateButton()
     }
-    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        let fitted = datePicker.sizeThatFits(.zero)
+        if dateBarWidthConstraint?.constant != fitted.width {
+            dateBarWidthConstraint?.constant = fitted.width
+        }
+        if dateBarHeightConstraint?.constant != fitted.height {
+            dateBarHeightConstraint?.constant = fitted.height
+        }
+    }
     // MARK: - UI Setup
 
 
@@ -194,10 +231,9 @@ final class TrackersListViewController: UIViewController {
         addButton.tintColor = .blackDay
         navigationItem.leftBarButtonItem = addButton
         navigationItem.rightBarButtonItem = UIBarButtonItem(
-            customView: datePicker
+            customView: dateBarContainer
         )
         view.backgroundColor = .whiteDay
-        view.addSubview(datePicker)
         view.addSubview(titleLabel)
         view.addSubview(searchField)
         
@@ -339,7 +375,7 @@ final class TrackersListViewController: UIViewController {
         // When system theme is dark, force the picker to render in light style with white background
         if traitCollection.userInterfaceStyle == .dark {
             datePicker.overrideUserInterfaceStyle = .light
-            datePicker.backgroundColor = .white
+            datePicker.subviews.first?.subviews.first?.subviews.first?.backgroundColor = .white
         } else {
             // In light theme, use defaults
             datePicker.overrideUserInterfaceStyle = .unspecified
@@ -594,7 +630,7 @@ private extension TrackersListViewController {
             self?.bulkCreateButtonTapped()
         }, for: .touchUpInside)
         view.addSubview(b)
-
+        
         NSLayoutConstraint.activate([
             b.widthAnchor.constraint(equalToConstant: 50),
             b.heightAnchor.constraint(equalToConstant: 50),
@@ -602,7 +638,7 @@ private extension TrackersListViewController {
             b.leadingAnchor.constraint(equalTo: filtersButton.trailingAnchor, constant: 12)
         ])
     }
-
+    
     func bulkCreateButtonTapped() {
         let allDays: [WeekDay] = (1...6).compactMap { WeekDay(rawValue: $0) }
         let emojis = ["🔥","🌿","💧","✨","🍎","🏃‍♂️","📚","🧘"]
