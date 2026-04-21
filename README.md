@@ -13,6 +13,7 @@ Tracker is an iOS app for tracking habits and irregular events. The app allows u
 - Onboarding flow
 - Local data persistence
 - iOS interface built with UIKit
+- Supports iOS 17+
 
 ## Tech Stack
 
